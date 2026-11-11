@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- هالة خارجية ناعمة -->
+    <path android:pathData="M54,54m-30,0a30,30 0 1,0 60,0a30,30 0 1,0 -60,0">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:type="radial"
+                android:centerX="54"
+                android:centerY="54"
+                android:gradientRadius="30">
+                <item android:offset="0.0" android:color="#66FF9F43" />
+                <item android:offset="1.0" android:color="#00FF9F43" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- الكرة الكهرمانية -->
+    <path android:pathData="M54,54m-18,0a18,18 0 1,0 36,0a18,18 0 1,0 -36,0">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:type="radial"
+                android:centerX="48"
+                android:centerY="47"
+                android:gradientRadius="26">
+                <item android:offset="0.0" android:color="#FFFFD9A8" />
+                <item android:offset="0.55" android:color="#FFFF9F43" />
+                <item android:offset="1.0" android:color="#FFE07A1F" />
+            </gradient>
+        </aapt:attr>
+    </path>
+</vector>
