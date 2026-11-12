@@ -51,13 +51,13 @@ fun MediaRow(
             if (leading != null) {
                 Box(Modifier.width(32.dp), contentAlignment = Alignment.Center) { leading() }
             } else {
-                AlbumArt(art, Modifier.size(52.dp))
+                AlbumArt(art, Modifier.size(56.dp), radius = 14.dp)
             }
             Column(Modifier.weight(1f)) {
                 Text(
                     text = title,
                     color = if (highlight) skin.accentText else skin.text,
-                    fontSize = 16.sp,
+                    fontSize = 17.sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -77,7 +77,7 @@ fun MediaRow(
         }
         Box(
             Modifier
-                .padding(start = 16.dp)
+                .padding(start = 86.dp, end = 16.dp)
                 .fillMaxWidth()
                 .height(0.5.dp)
                 .background(skin.divider),

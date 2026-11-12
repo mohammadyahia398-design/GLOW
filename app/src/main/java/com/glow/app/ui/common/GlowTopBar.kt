@@ -24,6 +24,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
 import com.glow.app.ui.theme.LocalGlowSkin
 
@@ -56,6 +57,8 @@ fun GlowTopBar(
     modifier: Modifier = Modifier,
     onBack: (() -> Unit)? = null,
     backIcon: IconKind = IconKind.Back,
+    titleSize: TextUnit = 20.sp,
+    titleWeight: FontWeight = FontWeight.SemiBold,
     actions: @Composable RowScope.() -> Unit = {},
 ) {
     val skin = LocalGlowSkin.current
@@ -73,8 +76,8 @@ fun GlowTopBar(
         Text(
             text = title.orEmpty(),
             color = skin.text,
-            fontSize = 20.sp,
-            fontWeight = FontWeight.SemiBold,
+            fontSize = titleSize,
+            fontWeight = titleWeight,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier

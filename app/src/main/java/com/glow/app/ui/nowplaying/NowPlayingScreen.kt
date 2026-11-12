@@ -1,6 +1,5 @@
 package com.glow.app.ui.nowplaying
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -12,11 +11,8 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -26,13 +22,10 @@ import com.glow.app.media.PlayerState
 import com.glow.app.ui.common.AlbumArt
 import com.glow.app.ui.common.GlowTopBar
 import com.glow.app.ui.common.IconKind
-import com.glow.app.ui.common.averageColor
-import com.glow.app.ui.common.rememberArt
-import com.glow.app.ui.glass.surfaces.glassBackdropSource
-import com.glow.app.ui.glass.surfaces.rememberGlassBackdrop
+import com.glow.app.ui.common.rememberArtPalette
 import com.glow.app.ui.theme.LocalGlowSkin
 
-/** المشغّل الكامل: غلاف كبير، عنوان، وعناصر التحكم، بخلفية متدرجة من لون الغلاف. */
+/** المشغّل الكامل: غلاف كبير وعنوان وعناصر التحكم، فوق خلفية حيّة بألوان الغلاف. */
 @Composable
 fun NowPlayingScreen(
     state: PlayerState,
@@ -47,24 +40,11 @@ fun NowPlayingScreen(
 ) {
     val skin = LocalGlowSkin.current
     val track = state.current ?: return
-    val bmp = rememberArt(track, 800)
-    val tint = remember(bmp) { bmp?.averageColor() ?: Color(0xFF4A69BD) }
-    val backdrop = rememberGlassBackdrop()
+    val palette = rememberArtPalette(track)
+    val contentColor = playerContentColor(palette, skin)
 
     Box(modifier.fillMaxSize()) {
-        Box(
-            Modifier
-                .matchParentSize()
-                .glassBackdropSource(backdrop)
-                .background(
-                    Brush.verticalGradient(
-                        listOf(
-                            tint.copy(alpha = if (skin.isDark) 0.75f else 0.45f),
-                            if (skin.isDark) skin.bgTop else skin.bgBottom,
-                        ),
-                    ),
-                ),
-        )
+        AnimatedArtBackground(palette, Modifier.matchParentSize())
         Column(
             Modifier.fillMaxSize().navigationBarsPadding().padding(horizontal = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -93,7 +73,7 @@ fun NowPlayingScreen(
             Spacer(Modifier.weight(1f))
             NowPlayingControls(
                 state = state,
-                backdrop = backdrop,
+                contentColor = contentColor,
                 onSeek = onSeek,
                 onTogglePlay = onTogglePlay,
                 onNext = onNext,
