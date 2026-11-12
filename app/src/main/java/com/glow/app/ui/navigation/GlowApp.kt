@@ -48,6 +48,7 @@ import com.glow.app.ui.glass.surfaces.rememberGlassBackdrop
 import com.glow.app.ui.library.MediaGroup
 import com.glow.app.ui.library.LibraryScreen
 import com.glow.app.ui.nowplaying.NowPlayingScreen
+import com.glow.app.ui.theme.LocalGlowSkin
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlin.random.Random
 
@@ -59,6 +60,7 @@ private val idleState = MutableStateFlow(PlayerState())
  */
 @Composable
 fun GlowApp(modifier: Modifier = Modifier) {
+    val skin = LocalGlowSkin.current
     val context = LocalContext.current
     val appContext = context.applicationContext
     val repository = remember { MediaStoreRepository(appContext) }
@@ -112,7 +114,14 @@ fun GlowApp(modifier: Modifier = Modifier) {
 
     val tier = rememberGlassTier()
     val reduceMotion = rememberSystemReduceMotion()
-    val glassConfig = remember(tier, reduceMotion) { GlassConfig(tier = tier, reduceMotion = reduceMotion) }
+    val glassConfig = remember(tier, reduceMotion, skin) {
+        GlassConfig(
+            tier = tier,
+            tint = skin.glassTint,
+            fallbackBase = skin.glassBase,
+            reduceMotion = reduceMotion,
+        )
+    }
     val backdrop = rememberGlassBackdrop()
     val current = playerState.current
 
@@ -122,7 +131,7 @@ fun GlowApp(modifier: Modifier = Modifier) {
                 Modifier
                     .matchParentSize()
                     .glassBackdropSource(backdrop)
-                    .background(Brush.verticalGradient(listOf(Color(0xFF0D0E12), Color(0xFF1B1422)))),
+                    .background(Brush.verticalGradient(listOf(skin.bgTop, skin.bgBottom))),
             ) {
                 val open = collection
                 if (open == null) {

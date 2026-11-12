@@ -18,13 +18,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.glow.app.media.PlayerState
 import com.glow.app.media.RepeatMode
-import com.glow.app.ui.common.Amber
 import com.glow.app.ui.common.GlowIcon
 import com.glow.app.ui.common.GlowIconTap
 import com.glow.app.ui.common.IconKind
 import com.glow.app.ui.common.formatTime
 import com.glow.app.ui.glass.components.GlassSlider
 import com.glow.app.ui.glass.surfaces.GlassBackdrop
+import com.glow.app.ui.theme.LocalGlowSkin
 
 /** شريط التقدم الزجاجي مع الزمن، وصف أزرار: خلط، سابق، تشغيل، تالٍ، تكرار. */
 @Composable
@@ -39,9 +39,10 @@ fun NowPlayingControls(
     onRepeat: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val skin = LocalGlowSkin.current
     var drag by remember { mutableStateOf<Float?>(null) }
     val value = drag ?: state.progress
-    val dim = Color.White.copy(alpha = 0.75f)
+    val dim = skin.textSecondary
 
     Column(modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
         GlassSlider(
@@ -69,26 +70,26 @@ fun NowPlayingControls(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             GlowIconTap("خلط", onShuffle) {
-                GlowIcon(IconKind.Shuffle, if (state.shuffle) Amber else dim)
+                GlowIcon(IconKind.Shuffle, if (state.shuffle) skin.accentText else dim)
             }
-            GlowIconTap("السابق", onPrevious) { GlowIcon(IconKind.Prev, Color.White, 30.dp) }
+            GlowIconTap("السابق", onPrevious) { GlowIcon(IconKind.Prev, skin.text, 30.dp) }
             GlowIconTap(
                 description = if (state.isPlaying) "إيقاف مؤقت" else "تشغيل",
                 onClick = onTogglePlay,
                 size = 72.dp,
-                background = Amber,
+                background = skin.accent,
             ) {
                 GlowIcon(
                     if (state.isPlaying) IconKind.Pause else IconKind.Play,
-                    Color(0xFF0D0E12),
+                    skin.onAccent,
                     34.dp,
                 )
             }
-            GlowIconTap("التالي", onNext) { GlowIcon(IconKind.Next, Color.White, 30.dp) }
+            GlowIconTap("التالي", onNext) { GlowIcon(IconKind.Next, skin.text, 30.dp) }
             GlowIconTap("تكرار", onRepeat) {
                 GlowIcon(
                     if (state.repeat == RepeatMode.One) IconKind.RepeatOne else IconKind.Repeat,
-                    if (state.repeat == RepeatMode.Off) dim else Amber,
+                    if (state.repeat == RepeatMode.Off) dim else skin.accentText,
                 )
             }
         }

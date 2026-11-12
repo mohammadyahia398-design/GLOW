@@ -3,8 +3,11 @@ package com.glow.app.ui.theme
 import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ReadOnlyComposable
@@ -13,48 +16,44 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
-/** Glow داكن دائماً: الإضاءة هي جوهر الهوية. (يتطلب material3 بإصدار 1.2 أو أحدث). */
-private val GlowColorScheme = darkColorScheme(
-    primary = GlowPalette.Amber,
-    onPrimary = GlowPalette.Charcoal,
-    primaryContainer = Color(0xFF3A2814),
-    onPrimaryContainer = Color(0xFFFFD9B0),
-
-    secondary = GlowPalette.TwilightSoft,
-    onSecondary = GlowPalette.Charcoal,
-    secondaryContainer = Color(0xFF1E2748),
-    onSecondaryContainer = Color(0xFFDCE3FF),
-
-    tertiary = GlowPalette.Coral,
-    onTertiary = GlowPalette.Charcoal,
-    tertiaryContainer = Color(0xFF47201F),
-    onTertiaryContainer = Color(0xFFFFDAD6),
-
-    background = GlowPalette.Charcoal,
-    onBackground = GlowPalette.Ivory,
-
-    surface = GlowPalette.Night,
-    onSurface = GlowPalette.Ivory,
-    surfaceVariant = GlowPalette.Surface,
-    onSurfaceVariant = GlowPalette.Muted,
-    surfaceTint = GlowPalette.Amber,
-
-    surfaceContainerLowest = GlowPalette.Charcoal,
-    surfaceContainerLow = GlowPalette.Night,
-    surfaceContainer = GlowPalette.Surface,
-    surfaceContainerHigh = GlowPalette.SurfaceLifted,
-    surfaceContainerHighest = Color(0xFF2B3040),
-
-    outline = GlowPalette.Muted,
-    outlineVariant = GlowPalette.OutlineSolid,
-
-    error = Color(0xFFFF8A80),
-    onError = GlowPalette.Charcoal,
-    errorContainer = Color(0xFF4A1F1D),
-    onErrorContainer = Color(0xFFFFDAD6),
-
-    scrim = Color.Black,
-)
+private fun glowColorScheme(skin: GlowSkin): ColorScheme =
+    if (skin.isDark) {
+        darkColorScheme(
+            primary = skin.accent,
+            onPrimary = skin.onAccent,
+            primaryContainer = Color(0xFF12303D),
+            onPrimaryContainer = Color(0xFF67E8F9),
+            secondary = Color(0xFF67E8F9),
+            onSecondary = skin.onAccent,
+            background = skin.bgTop,
+            onBackground = skin.text,
+            surface = skin.bgTop,
+            onSurface = skin.text,
+            surfaceVariant = skin.bgBottom,
+            onSurfaceVariant = skin.textSecondary,
+            surfaceTint = skin.accent,
+            outline = skin.textSecondary,
+            outlineVariant = Color(0xFF1E4352),
+        )
+    } else {
+        lightColorScheme(
+            primary = skin.accent,
+            onPrimary = skin.onAccent,
+            primaryContainer = Color(0xFF67E8F9),
+            onPrimaryContainer = Color(0xFF07141C),
+            secondary = skin.accentText,
+            onSecondary = Color.White,
+            background = skin.bgTop,
+            onBackground = skin.text,
+            surface = skin.bgTop,
+            onSurface = skin.text,
+            surfaceVariant = skin.bgBottom,
+            onSurfaceVariant = skin.textSecondary,
+            surfaceTint = skin.accent,
+            outline = skin.textSecondary,
+            outlineVariant = Color(0xFFA5E6F0),
+        )
+    }
 
 /** وصول مختصر للرموز الخاصة بـ Glow: GlowTheme.colors و GlowTheme.dimens. */
 object GlowTheme {
@@ -65,27 +64,33 @@ object GlowTheme {
         @Composable @ReadOnlyComposable get() = LocalGlowDimens.current
 }
 
+/** يتبع الوضع الداكن أو الفاتح في النظام افتراضياً. */
 @Composable
-fun GlowTheme(content: @Composable () -> Unit) {
+fun GlowTheme(
+    darkTheme: Boolean = isSystemInDarkTheme(),
+    content: @Composable () -> Unit,
+) {
+    val skin = if (darkTheme) GlowSkins.Dark else GlowSkins.Light
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
             val window = view.context.findActivity()?.window ?: return@SideEffect
             val controller = WindowCompat.getInsetsController(window, view)
-            // خلفية داكنة ← أيقونات فاتحة في شريط الحالة وشريط التنقل
-            controller.isAppearanceLightStatusBars = false
-            controller.isAppearanceLightNavigationBars = false
+            // خلفية فاتحة ← أيقونات داكنة في شريط الحالة وشريط التنقل، والعكس
+            controller.isAppearanceLightStatusBars = !darkTheme
+            controller.isAppearanceLightNavigationBars = !darkTheme
         }
     }
 
     CompositionLocalProvider(
         LocalGlowColors provides GlowColors(),
         LocalGlowDimens provides GlowDimens(),
+        LocalGlowSkin provides skin,
     ) {
         MaterialTheme(
-            colorScheme = GlowColorScheme,
-            typography = GlowTypography.Material,   // مربوط، على عكس المشروع القديم
-            shapes = GlowShapes.Material,           // مربوط، على عكس المشروع القديم
+            colorScheme = glowColorScheme(skin),
+            typography = GlowTypography.Material,
+            shapes = GlowShapes.Material,
             content = content,
         )
     }

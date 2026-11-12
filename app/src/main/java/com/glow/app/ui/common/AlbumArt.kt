@@ -78,7 +78,7 @@ fun AlbumArt(
     Box(
         modifier
             .clip(RoundedCornerShape(radius))
-            .background(Brush.linearGradient(listOf(Color(0xFF4A69BD), Color(0xFFFF9F43)))),
+            .background(Brush.linearGradient(listOf(Color(0xFF12303D), Color(0xFF06B6D4)))),
         contentAlignment = Alignment.Center,
     ) {
         if (bmp != null) {

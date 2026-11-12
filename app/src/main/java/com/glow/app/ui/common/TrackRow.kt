@@ -20,8 +20,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.glow.app.media.Track
-
-val Amber = Color(0xFFFF9F43)
+import com.glow.app.ui.theme.LocalGlowSkin
 
 fun formatTime(ms: Long): String {
     val s = ms / 1000
@@ -42,6 +41,7 @@ fun MediaRow(
     modifier: Modifier = Modifier,
     leading: (@Composable () -> Unit)? = null,
 ) {
+    val skin = LocalGlowSkin.current
     Column(modifier.fillMaxWidth().clickable(onClick = onClick)) {
         Row(
             Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp),
@@ -56,7 +56,7 @@ fun MediaRow(
             Column(Modifier.weight(1f)) {
                 Text(
                     text = title,
-                    color = if (highlight) Amber else Color.White,
+                    color = if (highlight) skin.accentText else skin.text,
                     fontSize = 16.sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -64,7 +64,7 @@ fun MediaRow(
                 if (subtitle != null) {
                     Text(
                         text = subtitle,
-                        color = Color.White.copy(alpha = 0.6f),
+                        color = skin.textSecondary,
                         fontSize = 13.sp,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
@@ -72,7 +72,7 @@ fun MediaRow(
                 }
             }
             if (trailing != null) {
-                Text(text = trailing, color = Color.White.copy(alpha = 0.5f), fontSize = 13.sp)
+                Text(text = trailing, color = skin.textSecondary, fontSize = 13.sp)
             }
         }
         Box(
@@ -80,7 +80,7 @@ fun MediaRow(
                 .padding(start = 16.dp)
                 .fillMaxWidth()
                 .height(0.5.dp)
-                .background(Color.White.copy(alpha = 0.08f)),
+                .background(skin.divider),
         )
     }
 }

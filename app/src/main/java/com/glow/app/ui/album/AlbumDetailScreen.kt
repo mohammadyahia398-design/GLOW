@@ -21,7 +21,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.glow.app.ui.common.AlbumArt
-import com.glow.app.ui.common.Amber
 import com.glow.app.ui.common.GlowIcon
 import com.glow.app.ui.common.GlowIconTap
 import com.glow.app.ui.common.GlowTopBar
@@ -29,6 +28,7 @@ import com.glow.app.ui.common.IconKind
 import com.glow.app.ui.common.MediaRow
 import com.glow.app.ui.common.formatTime
 import com.glow.app.ui.library.MediaGroup
+import com.glow.app.ui.theme.LocalGlowSkin
 
 /** شاشة ألبوم أو فنان: غلاف كبير، عنوان، زرّا خلط وتشغيل، ثم المقاطع مرقّمة. */
 @Composable
@@ -40,6 +40,7 @@ fun CollectionScreen(
     onShuffle: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val skin = LocalGlowSkin.current
     val tracks = collection.tracks
     val info = listOfNotNull(
         collection.subtitle.takeIf { it.isNotBlank() },
@@ -56,7 +57,7 @@ fun CollectionScreen(
                 AlbumArt(collection.cover, Modifier.size(180.dp), radius = 28.dp, px = 512)
                 Text(
                     text = collection.title,
-                    color = Color.White,
+                    color = skin.text,
                     fontSize = 22.sp,
                     fontWeight = FontWeight.SemiBold,
                     textAlign = TextAlign.Center,
@@ -66,7 +67,7 @@ fun CollectionScreen(
                 )
                 Text(
                     text = info,
-                    color = Color.White.copy(alpha = 0.6f),
+                    color = skin.textSecondary,
                     fontSize = 14.sp,
                     modifier = Modifier.padding(top = 4.dp),
                 )
@@ -74,11 +75,11 @@ fun CollectionScreen(
                     Modifier.padding(top = 16.dp),
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
-                    GlowIconTap("تشغيل عشوائي", onShuffle, size = 56.dp, background = Color.White.copy(alpha = 0.12f)) {
-                        GlowIcon(IconKind.Shuffle, Color.White)
+                    GlowIconTap("تشغيل عشوائي", onShuffle, size = 56.dp, background = skin.chip) {
+                        GlowIcon(IconKind.Shuffle, skin.text)
                     }
-                    GlowIconTap("تشغيل", { onPlay(0) }, size = 56.dp, background = Amber) {
-                        GlowIcon(IconKind.Play, Color(0xFF0D0E12), 28.dp)
+                    GlowIconTap("تشغيل", { onPlay(0) }, size = 56.dp, background = skin.accent) {
+                        GlowIcon(IconKind.Play, skin.onAccent, 28.dp)
                     }
                 }
             }
@@ -94,7 +95,7 @@ fun CollectionScreen(
                 leading = {
                     Text(
                         text = "${i + 1}",
-                        color = if (t.id == currentId) Amber else Color.White.copy(alpha = 0.6f),
+                        color = if (t.id == currentId) skin.accentText else skin.textSecondary,
                         fontSize = 15.sp,
                     )
                 },

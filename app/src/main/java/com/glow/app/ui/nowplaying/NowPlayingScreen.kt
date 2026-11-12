@@ -30,6 +30,7 @@ import com.glow.app.ui.common.averageColor
 import com.glow.app.ui.common.rememberArt
 import com.glow.app.ui.glass.surfaces.glassBackdropSource
 import com.glow.app.ui.glass.surfaces.rememberGlassBackdrop
+import com.glow.app.ui.theme.LocalGlowSkin
 
 /** المشغّل الكامل: غلاف كبير، عنوان، وعناصر التحكم، بخلفية متدرجة من لون الغلاف. */
 @Composable
@@ -44,6 +45,7 @@ fun NowPlayingScreen(
     onRepeat: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val skin = LocalGlowSkin.current
     val track = state.current ?: return
     val bmp = rememberArt(track, 800)
     val tint = remember(bmp) { bmp?.averageColor() ?: Color(0xFF4A69BD) }
@@ -55,7 +57,12 @@ fun NowPlayingScreen(
                 .matchParentSize()
                 .glassBackdropSource(backdrop)
                 .background(
-                    Brush.verticalGradient(listOf(tint.copy(alpha = 0.75f), Color(0xFF0D0E12))),
+                    Brush.verticalGradient(
+                        listOf(
+                            tint.copy(alpha = if (skin.isDark) 0.75f else 0.45f),
+                            if (skin.isDark) skin.bgTop else skin.bgBottom,
+                        ),
+                    ),
                 ),
         )
         Column(
@@ -68,7 +75,7 @@ fun NowPlayingScreen(
             Spacer(Modifier.height(24.dp))
             Text(
                 text = track.title,
-                color = Color.White,
+                color = skin.text,
                 fontSize = 24.sp,
                 fontWeight = FontWeight.SemiBold,
                 textAlign = TextAlign.Center,
@@ -77,7 +84,7 @@ fun NowPlayingScreen(
             )
             Text(
                 text = track.artist,
-                color = Color.White.copy(alpha = 0.65f),
+                color = skin.textSecondary,
                 fontSize = 16.sp,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,

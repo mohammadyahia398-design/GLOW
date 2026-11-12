@@ -37,13 +37,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.glow.app.media.Track
-import com.glow.app.ui.common.Amber
 import com.glow.app.ui.common.GlowIcon
 import com.glow.app.ui.common.GlowIconTap
 import com.glow.app.ui.common.GlowTopBar
 import com.glow.app.ui.common.IconKind
 import com.glow.app.ui.common.MediaRow
 import com.glow.app.ui.common.formatTime
+import com.glow.app.ui.theme.LocalGlowSkin
 
 /** ألبوم أو فنان: مجموعة مقاطع بغلاف واحد. */
 data class MediaGroup(
@@ -69,6 +69,7 @@ fun LibraryScreen(
     onOpen: (MediaGroup) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val skin = LocalGlowSkin.current
     var tab by remember { mutableStateOf(LibraryTab.Tracks) }
     var searching by remember { mutableStateOf(false) }
     var query by remember { mutableStateOf("") }
@@ -97,7 +98,7 @@ fun LibraryScreen(
                 GlowIconTap("بحث", {
                     searching = !searching
                     if (!searching) query = ""
-                }) { GlowIcon(IconKind.Search, if (searching) Amber else Color.White) }
+                }) { GlowIcon(IconKind.Search, if (searching) skin.accentText else skin.text) }
             },
         )
         if (searching) SearchField(query) { query = it }
@@ -112,7 +113,7 @@ fun LibraryScreen(
                 val size by animateFloatAsState(if (selected) 24f else 15f, label = "tab")
                 Text(
                     text = t.label,
-                    color = if (selected) Color.White else Color.White.copy(alpha = 0.55f),
+                    color = if (selected) skin.text else skin.textSecondary,
                     fontSize = size.sp,
                     fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
                     modifier = Modifier.clickable { tab = t }.padding(8.dp),
@@ -125,7 +126,7 @@ fun LibraryScreen(
                 .weight(1f)
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp))
-                .background(Color.White.copy(alpha = 0.06f)),
+                .background(skin.panel),
         ) {
             val pad = PaddingValues(top = 8.dp, bottom = 150.dp)
             when {
@@ -166,6 +167,7 @@ fun LibraryScreen(
 
 @Composable
 private fun SearchField(value: String, onChange: (String) -> Unit) {
+    val skin = LocalGlowSkin.current
     val focus = remember { FocusRequester() }
     LaunchedEffect(Unit) { focus.requestFocus() }
     Box(
@@ -173,18 +175,18 @@ private fun SearchField(value: String, onChange: (String) -> Unit) {
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 4.dp)
             .clip(RoundedCornerShape(24.dp))
-            .background(Color.White.copy(alpha = 0.08f))
+            .background(skin.chip)
             .padding(horizontal = 16.dp, vertical = 12.dp),
     ) {
         if (value.isEmpty()) {
-            Text("ابحث في مكتبتك", color = Color.White.copy(alpha = 0.4f), fontSize = 15.sp)
+            Text("ابحث في مكتبتك", color = skin.textSecondary, fontSize = 15.sp)
         }
         BasicTextField(
             value = value,
             onValueChange = onChange,
             singleLine = true,
-            textStyle = TextStyle(color = Color.White, fontSize = 15.sp),
-            cursorBrush = SolidColor(Amber),
+            textStyle = TextStyle(color = skin.text, fontSize = 15.sp),
+            cursorBrush = SolidColor(skin.accentText),
             modifier = Modifier.fillMaxWidth().focusRequester(focus),
         )
     }
@@ -192,23 +194,25 @@ private fun SearchField(value: String, onChange: (String) -> Unit) {
 
 @Composable
 private fun PermissionPrompt(onRequestPermission: () -> Unit) {
+    val skin = LocalGlowSkin.current
     Column(
         Modifier.fillMaxSize().padding(32.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text("يحتاج Glow إذن قراءة الموسيقى لعرض مكتبتك", color = Color.White, fontSize = 16.sp)
+        Text("يحتاج Glow إذن قراءة الموسيقى لعرض مكتبتك", color = skin.text, fontSize = 16.sp)
         Button(
             onClick = onRequestPermission,
             modifier = Modifier.padding(top = 16.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Amber, contentColor = Color.Black),
+            colors = ButtonDefaults.buttonColors(containerColor = skin.accent, contentColor = skin.onAccent),
         ) { Text("السماح") }
     }
 }
 
 @Composable
 private fun CenteredMessage(text: String) {
+    val skin = LocalGlowSkin.current
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text(text, color = Color.White.copy(alpha = 0.7f), fontSize = 16.sp)
+        Text(text, color = skin.textSecondary, fontSize = 16.sp)
     }
 }

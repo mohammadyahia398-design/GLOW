@@ -55,7 +55,7 @@ import com.glow.app.ui.glass.surfaces.glassBackdropSource
 import com.glow.app.ui.glass.surfaces.rememberGlassBackdrop
 
 private val Charcoal = Color(0xFF0D0E12)
-private val Amber = Color(0xFFFF9F43)
+private val Amber = Color(0xFF06B6D4)
 private val Coral = Color(0xFFFF6B6B)
 private val TwilightBlue = Color(0xFF4A69BD)
 private val Ivory = Color(0xFFF5F6FA)

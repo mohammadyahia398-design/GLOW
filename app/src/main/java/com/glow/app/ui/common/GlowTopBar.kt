@@ -25,6 +25,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.glow.app.ui.theme.LocalGlowSkin
 
 /** زر دائري قابل للنقر مع وصف لقارئ الشاشة. */
 @Composable
@@ -57,6 +58,7 @@ fun GlowTopBar(
     backIcon: IconKind = IconKind.Back,
     actions: @Composable RowScope.() -> Unit = {},
 ) {
+    val skin = LocalGlowSkin.current
     Row(
         modifier
             .fillMaxWidth()
@@ -66,11 +68,11 @@ fun GlowTopBar(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (onBack != null) {
-            GlowIconTap("رجوع", onBack) { GlowIcon(backIcon, Color.White) }
+            GlowIconTap("رجوع", onBack) { GlowIcon(backIcon, skin.text) }
         }
         Text(
             text = title.orEmpty(),
-            color = Color.White,
+            color = skin.text,
             fontSize = 20.sp,
             fontWeight = FontWeight.SemiBold,
             maxLines = 1,

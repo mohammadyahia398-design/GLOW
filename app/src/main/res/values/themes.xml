@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- سمة داكنة دائماً. الواجهة نفسها مبنية بـ Compose. -->
-    <style name="Theme.Glow" parent="android:Theme.Material.NoActionBar">
+    <!-- الوضع الفاتح. الواجهة نفسها مبنية بـ Compose. -->
+    <style name="Theme.Glow" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:windowBackground">@color/glow_window_background</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>

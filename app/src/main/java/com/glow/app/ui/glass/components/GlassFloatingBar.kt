@@ -40,7 +40,7 @@ import com.glow.app.ui.glass.surfaces.GlassSurface
 /** ألوان وأبعاد الشريط الافتراضية، مأخوذة من لوحة Glow. */
 object GlassBarDefaults {
     /** Amber. */
-    val Accent = Color(0xFFFF9F43)
+    val Accent = Color(0xFF06B6D4)
 
     /** Ivory. */
     val SelectedContent = Color(0xFFF5F6FA)

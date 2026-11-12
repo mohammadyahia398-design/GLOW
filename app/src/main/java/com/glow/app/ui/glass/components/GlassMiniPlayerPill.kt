@@ -41,11 +41,12 @@ import com.glow.app.ui.glass.motion.glassClickable
 import com.glow.app.ui.glass.motion.rememberGlassInteraction
 import com.glow.app.ui.glass.surfaces.GlassBackdrop
 import com.glow.app.ui.glass.surfaces.GlassSurface
+import com.glow.app.ui.theme.LocalGlowSkin
 
 private val Ivory = Color(0xFFF5F6FA)
 private val Muted = Color(0xFF8C92A4)
 private val Charcoal = Color(0xFF0D0E12)
-private val DefaultAccent = Color(0xFFFF9F43)
+private val DefaultAccent = Color(0xFF06B6D4)
 
 private val PillHeight = 64.dp
 
@@ -70,11 +71,12 @@ fun GlassMiniPlayerPill(
     modifier: Modifier = Modifier,
     backdrop: GlassBackdrop? = null,
     onNext: (() -> Unit)? = null,
-    accent: Color = DefaultAccent,
+    accent: Color = LocalGlowSkin.current.accent,
     playLabel: String = if (isPlaying) "Pause" else "Play",
     nextLabel: String = "Next",
     artwork: (@Composable () -> Unit)? = null,
 ) {
+    val skin = LocalGlowSkin.current
     val interaction = rememberGlassInteraction()
 
     GlassSurface(
@@ -102,7 +104,7 @@ fun GlassMiniPlayerPill(
                     .drawBehind {
                         val fraction = progress().coerceIn(0f, 1f)
                         val radius = CornerRadius(size.height / 2f)
-                        drawRoundRect(color = Color.White.copy(alpha = 0.12f), cornerRadius = radius)
+                        drawRoundRect(color = skin.chip, cornerRadius = radius)
                         val fillWidth = size.width * fraction
                         if (fillWidth > 0f) {
                             val rtl = layoutDirection == LayoutDirection.Rtl
@@ -126,7 +128,7 @@ fun GlassMiniPlayerPill(
                     modifier = Modifier
                         .size(48.dp)
                         .clip(CircleShape)
-                        .background(Color.White.copy(alpha = 0.08f)),
+                        .background(skin.chip),
                     contentAlignment = Alignment.Center,
                 ) {
                     artwork?.invoke()
@@ -140,7 +142,7 @@ fun GlassMiniPlayerPill(
                 ) {
                     Text(
                         text = title,
-                        color = Ivory,
+                        color = skin.text,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.SemiBold,
                         letterSpacing = 0.sp,
@@ -149,7 +151,7 @@ fun GlassMiniPlayerPill(
                     )
                     Text(
                         text = subtitle,
-                        color = Muted,
+                        color = skin.textSecondary,
                         fontSize = 12.sp,
                         letterSpacing = 0.sp,
                         maxLines = 1,
@@ -163,7 +165,7 @@ fun GlassMiniPlayerPill(
                         description = nextLabel,
                         background = Color.Transparent,
                     ) {
-                        NextIcon(color = Ivory)
+                        NextIcon(color = skin.text)
                     }
                 }
 
@@ -172,7 +174,7 @@ fun GlassMiniPlayerPill(
                     description = playLabel,
                     background = accent,
                 ) {
-                    PlayPauseIcon(isPlaying = isPlaying, color = Charcoal)
+                    PlayPauseIcon(isPlaying = isPlaying, color = skin.onAccent)
                 }
             }
         }

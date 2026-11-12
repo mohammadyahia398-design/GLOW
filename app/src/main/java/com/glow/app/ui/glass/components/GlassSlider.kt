@@ -43,9 +43,10 @@ import com.glow.app.ui.glass.core.LocalGlassConfig
 import com.glow.app.ui.glass.motion.glassTween
 import com.glow.app.ui.glass.surfaces.GlassBackdrop
 import com.glow.app.ui.glass.surfaces.GlassSurface
+import com.glow.app.ui.theme.LocalGlowSkin
 import kotlin.math.abs
 
-private val DefaultAccent = Color(0xFFFF9F43)
+private val DefaultAccent = Color(0xFF06B6D4)
 
 /** أقصى تمدد أفقي عند السحب خارج الطرفين (كنسبة من العرض). */
 private const val RUBBER_MAX = 0.06f
@@ -82,7 +83,7 @@ fun GlassSlider(
     enabled: Boolean = true,
     onValueChangeFinished: (() -> Unit)? = null,
     contentDescription: String? = null,
-    accent: Color = DefaultAccent,
+    accent: Color = LocalGlowSkin.current.accent,
     trackHeight: Dp = 44.dp,
     icon: (@Composable () -> Unit)? = null,
 ) {

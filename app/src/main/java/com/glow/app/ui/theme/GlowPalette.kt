@@ -13,17 +13,18 @@ import androidx.compose.ui.graphics.Color
  */
 object GlowPalette {
     // ── الأساسية (من المرجع البصري) ─────────────────────────
-    val Charcoal = Color(0xFF0D0E12)
-    val Amber = Color(0xFFFF9F43)
+    val Charcoal = Color(0xFF07141C)
+    // الاسم Amber محفوظ للتوافق مع بقية الكود؛ القيمة الآن Cyan الهوية الجديدة.
+    val Amber = Color(0xFF06B6D4)
     val Coral = Color(0xFFFF6B6B)
     val TwilightBlue = Color(0xFF4A69BD)
-    val Ivory = Color(0xFFF5F6FA)
+    val Ivory = Color(0xFFF0FDFF)
     val Muted = Color(0xFF8C92A4)
 
     // ── مشتقة ───────────────────────────────────────────────
     val Teal = Color(0xFF5FB3A6)           // الطبيعة والهدوء
     val TwilightSoft = Color(0xFF8FA6E8)   // نسخة مقروءة من Twilight على الخلفية الداكنة
-    val Night = Color(0xFF14161C)
+    val Night = Color(0xFF12303D)
     val Surface = Color(0xFF1A1D25)
     val SurfaceLifted = Color(0xFF222632)
     val OutlineSolid = Color(0xFF2A2E3A)

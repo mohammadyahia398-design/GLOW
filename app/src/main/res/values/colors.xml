@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ic_launcher_background">#FF14141A</color>
-    <color name="glow_amber">#FFFF9F43</color>
-    <color name="glow_window_background">#FF0D0E12</color>
+    <color name="ic_launcher_background">#FF07141C</color>
+    <color name="glow_accent">#FF06B6D4</color>
+    <color name="glow_window_background">#FFF0FDFF</color>
 </resources>

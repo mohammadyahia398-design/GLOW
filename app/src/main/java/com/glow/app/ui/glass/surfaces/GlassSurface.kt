@@ -32,6 +32,7 @@ import com.glow.app.ui.glass.lighting.glassSpecularSheen
 import com.glow.app.ui.glass.motion.GlassInteractionState
 import com.glow.app.ui.glass.motion.glassPressLight
 import com.glow.app.ui.glass.motion.glassPressScale
+import com.glow.app.ui.theme.LocalGlowSkin
 
 /** القيم الافتراضية للأسطح الزجاجية. */
 object GlassSurfaceDefaults {
@@ -66,6 +67,7 @@ fun GlassSurface(
     content: @Composable BoxScope.() -> Unit,
 ) {
     val config = LocalGlassConfig.current
+    val skin = LocalGlowSkin.current
     val tier = config.tier
     val ambientLight = LocalLightSource.current
 
@@ -113,7 +115,7 @@ fun GlassSurface(
                 .glassFallbackBase(shape, config)
                 .glassTint(shape, style, config)
                 .glassSpecularSheen(shape, style, lightProvider)
-                .border(0.5.dp, Color.White.copy(alpha = style.borderAlpha), shape)
+                .border(0.5.dp, skin.glassBorder.copy(alpha = style.borderAlpha), shape)
                 .glassEdgeHighlight(shape, style, lightProvider),
         )
 
