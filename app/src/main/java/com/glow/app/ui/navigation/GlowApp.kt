@@ -37,8 +37,6 @@ import com.glow.app.media.PlaybackConnection
 import com.glow.app.media.PlayerState
 import com.glow.app.media.Track
 import com.glow.app.ui.album.CollectionScreen
-import com.glow.app.ui.common.AlbumArt
-import com.glow.app.ui.glass.components.GlassMiniPlayerPill
 import com.glow.app.ui.glass.core.GlassConfig
 import com.glow.app.ui.glass.core.ProvideGlassConfig
 import com.glow.app.ui.glass.core.rememberGlassTier
@@ -47,6 +45,7 @@ import com.glow.app.ui.glass.surfaces.glassBackdropSource
 import com.glow.app.ui.glass.surfaces.rememberGlassBackdrop
 import com.glow.app.ui.library.MediaGroup
 import com.glow.app.ui.library.LibraryScreen
+import com.glow.app.ui.nowplaying.ArtMiniPlayer
 import com.glow.app.ui.nowplaying.NowPlayingScreen
 import com.glow.app.ui.theme.LocalGlowSkin
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -159,22 +158,18 @@ fun GlowApp(modifier: Modifier = Modifier) {
             }
 
             if (current != null && !showPlayer) {
-                GlassMiniPlayerPill(
-                    title = current.title,
-                    subtitle = current.artist,
+                ArtMiniPlayer(
+                    track = current,
                     isPlaying = playerState.isPlaying,
                     progress = { playerState.progress },
                     onTogglePlay = { controller?.togglePlay() },
-                    onClick = { showPlayer = true },
                     onNext = { controller?.next() },
-                    backdrop = backdrop,
-                    playLabel = if (playerState.isPlaying) "إيقاف مؤقت" else "تشغيل",
-                    nextLabel = "التالي",
-                    artwork = { AlbumArt(current, Modifier.size(48.dp), radius = 24.dp) },
+                    onPrevious = { controller?.previous() },
+                    onClick = { showPlayer = true },
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
                         .navigationBarsPadding()
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                        .padding(horizontal = 12.dp, vertical = 12.dp),
                 )
             }
 

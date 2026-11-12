@@ -12,6 +12,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items as gridItems
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -37,6 +40,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.glow.app.media.Track
+import com.glow.app.ui.common.CoverCell
 import com.glow.app.ui.common.GlowIcon
 import com.glow.app.ui.common.GlowIconTap
 import com.glow.app.ui.common.GlowTopBar
@@ -94,6 +98,8 @@ fun LibraryScreen(
     Column(modifier.fillMaxSize()) {
         GlowTopBar(
             title = "Glow",
+            titleSize = 30.sp,
+            titleWeight = FontWeight.Bold,
             actions = {
                 GlowIconTap("بحث", {
                     searching = !searching
@@ -110,7 +116,7 @@ fun LibraryScreen(
         ) {
             LibraryTab.values().forEach { t ->
                 val selected = t == tab
-                val size by animateFloatAsState(if (selected) 24f else 15f, label = "tab")
+                val size by animateFloatAsState(if (selected) 28f else 16f, label = "tab")
                 Text(
                     text = t.label,
                     color = if (selected) skin.text else skin.textSecondary,
@@ -129,6 +135,7 @@ fun LibraryScreen(
                 .background(skin.panel),
         ) {
             val pad = PaddingValues(top = 8.dp, bottom = 150.dp)
+            val gridPad = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 150.dp)
             when {
                 !hasAudioAccess -> PermissionPrompt(onRequestPermission)
                 loaded && tracks.isEmpty() -> CenteredMessage("لا توجد موسيقى على هذا الجهاز")
@@ -142,20 +149,35 @@ fun LibraryScreen(
                         )
                     }
                 }
-                tab == LibraryTab.Albums -> LazyColumn(Modifier.fillMaxSize(), contentPadding = pad) {
-                    items(albums, key = { it.cover.albumId }) { c ->
-                        MediaRow(
-                            art = c.cover, title = c.title, subtitle = c.subtitle,
-                            trailing = "${c.tracks.size} أغنية", highlight = false,
+                tab == LibraryTab.Albums -> LazyVerticalGrid(
+                    columns = GridCells.Fixed(2),
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = gridPad,
+                    horizontalArrangement = Arrangement.spacedBy(14.dp),
+                    verticalArrangement = Arrangement.spacedBy(18.dp),
+                ) {
+                    gridItems(albums, key = { it.cover.albumId }) { c ->
+                        CoverCell(
+                            art = c.cover,
+                            title = c.title,
+                            subtitle = "${c.subtitle} | ${c.tracks.size} أغنية",
                             onClick = { onOpen(c) },
                         )
                     }
                 }
-                else -> LazyColumn(Modifier.fillMaxSize(), contentPadding = pad) {
-                    items(artists, key = { it.title }) { c ->
-                        MediaRow(
-                            art = c.cover, title = c.title, subtitle = null,
-                            trailing = "${c.tracks.size} أغنية", highlight = false,
+                else -> LazyVerticalGrid(
+                    columns = GridCells.Fixed(2),
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = gridPad,
+                    horizontalArrangement = Arrangement.spacedBy(14.dp),
+                    verticalArrangement = Arrangement.spacedBy(18.dp),
+                ) {
+                    gridItems(artists, key = { it.title }) { c ->
+                        CoverCell(
+                            art = c.cover,
+                            title = null,
+                            subtitle = "${c.tracks.size} أغنية",
+                            overlay = c.title,
                             onClick = { onOpen(c) },
                         )
                     }

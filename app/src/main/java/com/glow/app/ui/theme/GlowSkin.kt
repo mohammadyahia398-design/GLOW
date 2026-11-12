@@ -69,7 +69,7 @@ object GlowSkins {
         accent = Cyan,
         onAccent = Night,
         accentText = CyanDeep,
-        panel = Teal.copy(alpha = 0.06f),
+        panel = Color.White.copy(alpha = 0.78f),
         chip = Teal.copy(alpha = 0.10f),
         divider = Teal.copy(alpha = 0.10f),
         glassTint = Color.White,

@@ -22,15 +22,12 @@ import com.glow.app.ui.common.GlowIcon
 import com.glow.app.ui.common.GlowIconTap
 import com.glow.app.ui.common.IconKind
 import com.glow.app.ui.common.formatTime
-import com.glow.app.ui.glass.components.GlassSlider
-import com.glow.app.ui.glass.surfaces.GlassBackdrop
-import com.glow.app.ui.theme.LocalGlowSkin
 
-/** شريط التقدم الزجاجي مع الزمن، وصف أزرار: خلط، سابق، تشغيل، تالٍ، تكرار. */
+/** شريط التقدم مع الزمن، وصف أزرار: خلط، سابق، تشغيل، تالٍ، تكرار. كلها بلون [contentColor]. */
 @Composable
 fun NowPlayingControls(
     state: PlayerState,
-    backdrop: GlassBackdrop,
+    contentColor: Color,
     onSeek: (Long) -> Unit,
     onTogglePlay: () -> Unit,
     onNext: () -> Unit,
@@ -39,57 +36,57 @@ fun NowPlayingControls(
     onRepeat: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val skin = LocalGlowSkin.current
     var drag by remember { mutableStateOf<Float?>(null) }
     val value = drag ?: state.progress
-    val dim = skin.textSecondary
+    val dim = contentColor.copy(alpha = 0.75f)
 
     Column(modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-        GlassSlider(
+        ArtSeekBar(
             value = value,
             onValueChange = { drag = it },
             onValueChangeFinished = {
                 drag?.let { onSeek((it * state.durationMs).toLong()) }
                 drag = null
             },
-            backdrop = backdrop,
-            contentDescription = "التقدم",
-            trackHeight = 32.dp,
-            modifier = Modifier.fillMaxWidth(),
+            color = contentColor,
+            description = "التقدم",
         )
         Row(
-            Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 6.dp),
+            Modifier.fillMaxWidth().padding(horizontal = 4.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            Text(formatTime((value * state.durationMs).toLong()), color = dim, fontSize = 12.sp)
-            Text(formatTime(state.durationMs), color = dim, fontSize = 12.sp)
+            Text(formatTime((value * state.durationMs).toLong()), color = dim, fontSize = 13.sp)
+            Text(formatTime(state.durationMs), color = dim, fontSize = 13.sp)
         }
         Row(
-            Modifier.fillMaxWidth().padding(top = 8.dp),
+            Modifier.fillMaxWidth().padding(top = 20.dp),
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically,
         ) {
             GlowIconTap("خلط", onShuffle) {
-                GlowIcon(IconKind.Shuffle, if (state.shuffle) skin.accentText else dim)
+                GlowIcon(IconKind.Shuffle, contentColor.copy(alpha = if (state.shuffle) 1f else 0.5f))
             }
-            GlowIconTap("السابق", onPrevious) { GlowIcon(IconKind.Prev, skin.text, 30.dp) }
+            GlowIconTap("السابق", onPrevious, size = 56.dp) {
+                GlowIcon(IconKind.Prev, contentColor, 32.dp)
+            }
             GlowIconTap(
                 description = if (state.isPlaying) "إيقاف مؤقت" else "تشغيل",
                 onClick = onTogglePlay,
-                size = 72.dp,
-                background = skin.accent,
+                size = 76.dp,
             ) {
                 GlowIcon(
                     if (state.isPlaying) IconKind.Pause else IconKind.Play,
-                    skin.onAccent,
-                    34.dp,
+                    contentColor,
+                    52.dp,
                 )
             }
-            GlowIconTap("التالي", onNext) { GlowIcon(IconKind.Next, skin.text, 30.dp) }
+            GlowIconTap("التالي", onNext, size = 56.dp) {
+                GlowIcon(IconKind.Next, contentColor, 32.dp)
+            }
             GlowIconTap("تكرار", onRepeat) {
                 GlowIcon(
                     if (state.repeat == RepeatMode.One) IconKind.RepeatOne else IconKind.Repeat,
-                    if (state.repeat == RepeatMode.Off) dim else skin.accentText,
+                    contentColor.copy(alpha = if (state.repeat == RepeatMode.Off) 0.5f else 1f),
                 )
             }
         }
