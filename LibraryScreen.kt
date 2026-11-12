@@ -1,0 +1,214 @@
+package com.glow.app.ui.library
+
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.glow.app.media.Track
+import com.glow.app.ui.common.Amber
+import com.glow.app.ui.common.GlowIcon
+import com.glow.app.ui.common.GlowIconTap
+import com.glow.app.ui.common.GlowTopBar
+import com.glow.app.ui.common.IconKind
+import com.glow.app.ui.common.MediaRow
+import com.glow.app.ui.common.formatTime
+
+/** ألبوم أو فنان: مجموعة مقاطع بغلاف واحد. */
+data class MediaGroup(
+    val title: String,
+    val subtitle: String,
+    val cover: Track,
+    val tracks: List<Track>,
+)
+
+private enum class LibraryTab(val label: String) {
+    Tracks("الأغاني"), Albums("الألبومات"), Artists("الفنانون")
+}
+
+/** شاشة المكتبة على طراز Samsung Music: شريط علوي + تبويبات + لوح قائمة بزوايا مدوّرة. */
+@Composable
+fun LibraryScreen(
+    tracks: List<Track>,
+    loaded: Boolean,
+    hasAudioAccess: Boolean,
+    currentId: Long?,
+    onRequestPermission: () -> Unit,
+    onPlay: (List<Track>, Int) -> Unit,
+    onOpen: (MediaGroup) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var tab by remember { mutableStateOf(LibraryTab.Tracks) }
+    var searching by remember { mutableStateOf(false) }
+    var query by remember { mutableStateOf("") }
+
+    val shown = remember(tracks, query) {
+        if (query.isBlank()) tracks else tracks.filter {
+            it.title.contains(query, true) || it.artist.contains(query, true) ||
+                it.album.contains(query, true)
+        }
+    }
+    val albums = remember(shown) {
+        shown.groupBy { it.albumId }.values
+            .map { MediaGroup(it[0].album, it[0].artist, it[0], it) }
+            .sortedBy { it.title.lowercase() }
+    }
+    val artists = remember(shown) {
+        shown.groupBy { it.artist }
+            .map { (name, list) -> MediaGroup(name, "", list[0], list) }
+            .sortedBy { it.title.lowercase() }
+    }
+
+    Column(modifier.fillMaxSize()) {
+        GlowTopBar(
+            title = "Glow",
+            actions = {
+                GlowIconTap("بحث", {
+                    searching = !searching
+                    if (!searching) query = ""
+                }) { GlowIcon(IconKind.Search, if (searching) Amber else Color.White) }
+            },
+        )
+        if (searching) SearchField(query) { query = it }
+
+        Row(
+            Modifier.fillMaxWidth().padding(vertical = 10.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            LibraryTab.values().forEach { t ->
+                val selected = t == tab
+                val size by animateFloatAsState(if (selected) 24f else 15f, label = "tab")
+                Text(
+                    text = t.label,
+                    color = if (selected) Color.White else Color.White.copy(alpha = 0.55f),
+                    fontSize = size.sp,
+                    fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+                    modifier = Modifier.clickable { tab = t }.padding(8.dp),
+                )
+            }
+        }
+
+        Box(
+            Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp))
+                .background(Color.White.copy(alpha = 0.06f)),
+        ) {
+            val pad = PaddingValues(top = 8.dp, bottom = 150.dp)
+            when {
+                !hasAudioAccess -> PermissionPrompt(onRequestPermission)
+                loaded && tracks.isEmpty() -> CenteredMessage("لا توجد موسيقى على هذا الجهاز")
+                shown.isEmpty() && loaded -> CenteredMessage("لا نتائج")
+                tab == LibraryTab.Tracks -> LazyColumn(Modifier.fillMaxSize(), contentPadding = pad) {
+                    itemsIndexed(shown, key = { _, t -> t.id }) { i, t ->
+                        MediaRow(
+                            art = t, title = t.title, subtitle = t.artist,
+                            trailing = formatTime(t.durationMs), highlight = t.id == currentId,
+                            onClick = { onPlay(shown, i) },
+                        )
+                    }
+                }
+                tab == LibraryTab.Albums -> LazyColumn(Modifier.fillMaxSize(), contentPadding = pad) {
+                    items(albums, key = { it.cover.albumId }) { c ->
+                        MediaRow(
+                            art = c.cover, title = c.title, subtitle = c.subtitle,
+                            trailing = "${c.tracks.size} أغنية", highlight = false,
+                            onClick = { onOpen(c) },
+                        )
+                    }
+                }
+                else -> LazyColumn(Modifier.fillMaxSize(), contentPadding = pad) {
+                    items(artists, key = { it.title }) { c ->
+                        MediaRow(
+                            art = c.cover, title = c.title, subtitle = null,
+                            trailing = "${c.tracks.size} أغنية", highlight = false,
+                            onClick = { onOpen(c) },
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SearchField(value: String, onChange: (String) -> Unit) {
+    val focus = remember { FocusRequester() }
+    LaunchedEffect(Unit) { focus.requestFocus() }
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 4.dp)
+            .clip(RoundedCornerShape(24.dp))
+            .background(Color.White.copy(alpha = 0.08f))
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+    ) {
+        if (value.isEmpty()) {
+            Text("ابحث في مكتبتك", color = Color.White.copy(alpha = 0.4f), fontSize = 15.sp)
+        }
+        BasicTextField(
+            value = value,
+            onValueChange = onChange,
+            singleLine = true,
+            textStyle = TextStyle(color = Color.White, fontSize = 15.sp),
+            cursorBrush = SolidColor(Amber),
+            modifier = Modifier.fillMaxWidth().focusRequester(focus),
+        )
+    }
+}
+
+@Composable
+private fun PermissionPrompt(onRequestPermission: () -> Unit) {
+    Column(
+        Modifier.fillMaxSize().padding(32.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text("يحتاج Glow إذن قراءة الموسيقى لعرض مكتبتك", color = Color.White, fontSize = 16.sp)
+        Button(
+            onClick = onRequestPermission,
+            modifier = Modifier.padding(top = 16.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = Amber, contentColor = Color.Black),
+        ) { Text("السماح") }
+    }
+}
+
+@Composable
+private fun CenteredMessage(text: String) {
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Text(text, color = Color.White.copy(alpha = 0.7f), fontSize = 16.sp)
+    }
+}
