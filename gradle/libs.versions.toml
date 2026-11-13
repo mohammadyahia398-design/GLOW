@@ -5,11 +5,13 @@ kotlin = "2.0.21"
 composeBom = "2024.12.01"
 coreKtx = "1.15.0"
 activityCompose = "1.9.3"
+coreSplashscreen = "1.0.1"
 junit = "4.13.2"
 truth = "1.4.4"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "coreSplashscreen" }
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
 androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
 androidx-compose-ui = { group = "androidx.compose.ui", name = "ui" }

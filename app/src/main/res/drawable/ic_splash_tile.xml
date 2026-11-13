@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- أيقونة شاشة البداية للنظام: البلاطة بلا نص. تطابق تماماً بداية انيميشن GlowSplash. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="288dp"
+    android:height="288dp"
+    android:viewportWidth="288"
+    android:viewportHeight="288">
+    <group>
+        <clip-path android:pathData="M104.8,74.0H183.2A30.8,30.8 0 0 1 214.0,104.8V183.2A30.8,30.8 0 0 1 183.2,214.0H104.8A30.8,30.8 0 0 1 74.0,183.2V104.8A30.8,30.8 0 0 1 104.8,74.0Z" />
+        <path android:pathData="M74.0,74.0L214.0,74.0L214.0,214.0L74.0,214.0Z">
+            <aapt:attr name="android:fillColor">
+                <gradient android:type="linear" android:startX="74.0" android:startY="74.0" android:endX="74.0" android:endY="214.0">
+                    <item android:offset="0" android:color="#FFC8D2FC" />
+                    <item android:offset="0.45" android:color="#FFB4CCF2" />
+                    <item android:offset="0.62" android:color="#FF7CE8A8" />
+                    <item android:offset="1" android:color="#FF5CEB7A" />
+                </gradient>
+            </aapt:attr>
+        </path>
+        <path android:pathData="M74.0,74.0L214.0,74.0L214.0,214.0L74.0,214.0Z">
+            <aapt:attr name="android:fillColor">
+                <gradient android:type="radial" android:centerX="95.0" android:centerY="90.8" android:gradientRadius="84.0">
+                    <item android:offset="0.0" android:color="#FFFFFFFF" />
+                    <item android:offset="1.0" android:color="#00FFFFFF" />
+                </gradient>
+            </aapt:attr>
+        </path>
+        <path android:pathData="M74.0,74.0L214.0,74.0L214.0,214.0L74.0,214.0Z">
+            <aapt:attr name="android:fillColor">
+                <gradient android:type="radial" android:centerX="200.0" android:centerY="88.0" android:gradientRadius="77.0">
+                    <item android:offset="0.0" android:color="#FFC3BEFB" />
+                    <item android:offset="1.0" android:color="#00C3BEFB" />
+                </gradient>
+            </aapt:attr>
+        </path>
+        <path android:pathData="M74.0,74.0L214.0,74.0L214.0,214.0L74.0,214.0Z">
+            <aapt:attr name="android:fillColor">
+                <gradient android:type="radial" android:centerX="88.0" android:centerY="202.8" android:gradientRadius="84.0">
+                    <item android:offset="0.0" android:color="#FF41EC9F" />
+                    <item android:offset="1.0" android:color="#0041EC9F" />
+                </gradient>
+            </aapt:attr>
+        </path>
+        <path android:pathData="M74.0,74.0L214.0,74.0L214.0,214.0L74.0,214.0Z">
+            <aapt:attr name="android:fillColor">
+                <gradient android:type="radial" android:centerX="202.8" android:centerY="207.0" android:gradientRadius="77.0">
+                    <item android:offset="0.0" android:color="#FFB8F900" />
+                    <item android:offset="1.0" android:color="#00B8F900" />
+                </gradient>
+            </aapt:attr>
+        </path>
+    </group>
+</vector>
