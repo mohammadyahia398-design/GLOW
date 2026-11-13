@@ -90,9 +90,9 @@ data class LiquidBarSpec(
     val iconSize: Dp = 26.dp,
     val labelSize: TextUnit = 11.sp,
     val barStyle: GlassStyle = GlassStyle.Regular.copy(
-        tintAlpha = 0.14f,
-        fallbackTintAlpha = 0.30f,
-        borderAlpha = 0.26f,
+        tintAlpha = 0.22f,
+        fallbackTintAlpha = 0.40f,
+        borderAlpha = 0.32f,
     ),
     val lensStyle: GlassStyle = GlassStyle.Clear.copy(
         tintAlpha = 0.10f,
