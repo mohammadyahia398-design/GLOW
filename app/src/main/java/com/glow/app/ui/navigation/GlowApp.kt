@@ -7,6 +7,7 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
@@ -14,6 +15,7 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -47,6 +49,10 @@ import com.glow.app.ui.glass.core.rememberGlassTier
 import com.glow.app.ui.glass.core.rememberSystemReduceMotion
 import com.glow.app.ui.glass.surfaces.glassBackdropSource
 import com.glow.app.ui.glass.surfaces.rememberGlassBackdrop
+import com.glow.app.ui.common.GlowIcon
+import com.glow.app.ui.glass.components.LiquidBarItem
+import com.glow.app.ui.glass.components.LiquidGlassBar
+import com.glow.app.ui.library.LibraryTab
 import com.glow.app.ui.library.MediaGroup
 import com.glow.app.ui.library.LibraryScreen
 import com.glow.app.ui.nowplaying.ArtMiniPlayer
@@ -54,6 +60,9 @@ import com.glow.app.ui.nowplaying.NowPlayingScreen
 import com.glow.app.ui.theme.LocalGlowSkin
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlin.random.Random
+
+/** ارتفاع الشريط السفلي مع هوامشه؛ يُرفَع به المشغّل المصغّر فوقه. */
+private val BarLift = 80.dp
 
 private val idleState = MutableStateFlow(PlayerState())
 private val idleSleep = MutableStateFlow<Long?>(null)
@@ -128,6 +137,12 @@ fun GlowApp(settings: SettingsStore, modifier: Modifier = Modifier) {
     var collection by remember { mutableStateOf<MediaGroup?>(null) }
     var showPlayer by remember { mutableStateOf(false) }
     var showSettings by remember { mutableStateOf(false) }
+    var libraryTab by remember { mutableStateOf(LibraryTab.Tracks) }
+    val barItems = remember {
+        LibraryTab.barTabs.map { t ->
+            LiquidBarItem(t.name, t.label) { tint -> GlowIcon(t.icon, tint, 26.dp) }
+        }
+    }
     // أول معالج مسجَّل أقل أولوية: يُغلق المشغّل ثم الألبوم ثم الإعدادات.
     BackHandler(enabled = showSettings) { showSettings = false }
     BackHandler(enabled = showPlayer) { showPlayer = false }
@@ -172,6 +187,7 @@ fun GlowApp(settings: SettingsStore, modifier: Modifier = Modifier) {
                         hasAudioAccess = hasAudioAccess,
                         currentId = current?.id,
                         store = library,
+                        tab = libraryTab,
                         onRequestPermission = { launcher.launch(permissions) },
                         onPlay = { list, i -> connection.play(list, i) },
                         onOpen = { collection = it },
@@ -191,6 +207,9 @@ fun GlowApp(settings: SettingsStore, modifier: Modifier = Modifier) {
                 }
             }
 
+            val barVisible = !showSettings && collection == null && !showPlayer
+            val miniLift by animateDpAsState(if (barVisible) BarLift else 0.dp, label = "miniLift")
+
             if (current != null && !showPlayer) {
                 ArtMiniPlayer(
                     track = current,
@@ -203,7 +222,26 @@ fun GlowApp(settings: SettingsStore, modifier: Modifier = Modifier) {
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
                         .navigationBarsPadding()
-                        .padding(horizontal = 12.dp, vertical = 12.dp),
+                        .padding(start = 12.dp, end = 12.dp, top = 12.dp, bottom = 12.dp + miniLift),
+                )
+            }
+
+            // الشريط الزجاجي السفلي: أخٌ للمصدر وفوقه، فيلتقط الخلفية المشتركة.
+            AnimatedVisibility(
+                visible = barVisible,
+                modifier = Modifier.align(Alignment.BottomCenter),
+                enter = slideInVertically { it } + fadeIn(),
+                exit = slideOutVertically { it } + fadeOut(),
+            ) {
+                LiquidGlassBar(
+                    items = barItems,
+                    selectedId = libraryTab.name,
+                    onSelect = { id -> libraryTab = LibraryTab.valueOf(id) },
+                    backdrop = backdrop,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .navigationBarsPadding()
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
                 )
             }
 
