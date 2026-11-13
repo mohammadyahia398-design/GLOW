@@ -39,6 +39,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
@@ -278,7 +279,14 @@ private fun LiquidBarBody(
             Box(
                 Modifier
                     .matchParentSize()
-                    .background(accent.copy(alpha = spec.lensAccentAlpha)),
+                    .background(
+                        Brush.verticalGradient(
+                            listOf(
+                                accent.copy(alpha = spec.lensAccentAlpha * 0.3f),
+                                accent.copy(alpha = spec.lensAccentAlpha * 2.4f),
+                            ),
+                        ),
+                    ),
             )
         }
 
