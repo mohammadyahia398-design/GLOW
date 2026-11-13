@@ -22,7 +22,6 @@ import androidx.compose.ui.unit.dp
 import com.glow.app.ui.icons.Glyph
 import com.glow.app.ui.icons.GlowGlyph
 import com.glow.app.ui.icons.MusicGlyphs
-import com.glow.app.ui.icons.TransportGlyphs
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -46,20 +45,9 @@ fun GlowIcon(kind: IconKind, tint: Color, size: Dp = 24.dp, modifier: Modifier =
     }
 }
 
-/** الأيقونات التي لها بديل في نظام الأيقونات الجديد. الباقي يبقى بالرسم القديم. */
+/** الأيقونات التي لها نسخة مطابقة للمرجع. الباقي يبقى بالرسم القديم. */
 private fun IconKind.newGlyph(): Glyph? = when (this) {
-    IconKind.Play -> TransportGlyphs.Play
-    IconKind.Pause -> TransportGlyphs.Pause
-    IconKind.Next -> TransportGlyphs.Next
-    IconKind.Prev -> TransportGlyphs.Previous
-    IconKind.Shuffle -> TransportGlyphs.Shuffle
-    IconKind.Repeat -> TransportGlyphs.Repeat
-    IconKind.RepeatOne -> TransportGlyphs.RepeatOne
     IconKind.Note -> MusicGlyphs.Note
-    IconKind.Heart -> MusicGlyphs.Heart
-    IconKind.Playlist -> MusicGlyphs.Playlist
-    IconKind.Equalizer -> MusicGlyphs.Equalizer
-    IconKind.Info -> MusicGlyphs.Info
     IconKind.Album -> MusicGlyphs.AlbumFrame
     else -> null
 }
