@@ -70,7 +70,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlin.random.Random
 
 /** ارتفاع الشريط السفلي مع هوامشه؛ يُرفَع به المشغّل المصغّر فوقه. */
-private val BarLift = 80.dp
+private val BarLift = 84.dp
 
 /** ارتفاع المشغّل المصغّر والفراغ تحته (يطابق [ArtMiniPlayer] وهوامشه أدناه). */
 private val MiniHeight = ArtMiniPlayerHeight
