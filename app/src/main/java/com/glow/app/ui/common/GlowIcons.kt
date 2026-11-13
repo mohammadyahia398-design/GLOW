@@ -19,6 +19,10 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import com.glow.app.ui.icons.Glyph
+import com.glow.app.ui.icons.GlowGlyph
+import com.glow.app.ui.icons.MusicGlyphs
+import com.glow.app.ui.icons.TransportGlyphs
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -30,11 +34,34 @@ enum class IconKind {
 /** أيقونات مرسومة بـ Canvas. الاتجاهية منها (رجوع/تالٍ/سابق) تنعكس في RTL. */
 @Composable
 fun GlowIcon(kind: IconKind, tint: Color, size: Dp = 24.dp, modifier: Modifier = Modifier) {
+    val glyph = kind.newGlyph()
+    if (glyph != null) {
+        GlowGlyph(glyph, modifier, tint, size)
+        return
+    }
     val rtl = LocalLayoutDirection.current == LayoutDirection.Rtl
     val mirror = rtl && (kind == IconKind.Back || kind == IconKind.Next || kind == IconKind.Prev || kind == IconKind.Chevron)
     Canvas(modifier.size(size)) {
         scale(if (mirror) -1f else 1f, 1f) { paintIcon(kind, tint) }
     }
+}
+
+/** الأيقونات التي لها بديل في نظام الأيقونات الجديد. الباقي يبقى بالرسم القديم. */
+private fun IconKind.newGlyph(): Glyph? = when (this) {
+    IconKind.Play -> TransportGlyphs.Play
+    IconKind.Pause -> TransportGlyphs.Pause
+    IconKind.Next -> TransportGlyphs.Next
+    IconKind.Prev -> TransportGlyphs.Previous
+    IconKind.Shuffle -> TransportGlyphs.Shuffle
+    IconKind.Repeat -> TransportGlyphs.Repeat
+    IconKind.RepeatOne -> TransportGlyphs.RepeatOne
+    IconKind.Note -> MusicGlyphs.Note
+    IconKind.Heart -> MusicGlyphs.Heart
+    IconKind.Playlist -> MusicGlyphs.Playlist
+    IconKind.Equalizer -> MusicGlyphs.Equalizer
+    IconKind.Info -> MusicGlyphs.Info
+    IconKind.Album -> MusicGlyphs.AlbumFrame
+    else -> null
 }
 
 private fun DrawScope.paintIcon(kind: IconKind, c: Color) {
