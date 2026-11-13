@@ -14,6 +14,13 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -63,6 +70,13 @@ import kotlin.random.Random
 
 /** ارتفاع الشريط السفلي مع هوامشه؛ يُرفَع به المشغّل المصغّر فوقه. */
 private val BarLift = 80.dp
+
+/** ارتفاع المشغّل المصغّر والفراغ تحته (يطابق [ArtMiniPlayer] وهوامشه أدناه). */
+private val MiniHeight = 72.dp
+private val MiniGap = 12.dp
+
+/** طول التلاشي فوق أعلى عنصر سفلي (مشغّل أو شريط). */
+private val ScrimFade = 36.dp
 
 private val idleState = MutableStateFlow(PlayerState())
 private val idleSleep = MutableStateFlow<Long?>(null)
@@ -163,6 +177,8 @@ fun GlowApp(settings: SettingsStore, modifier: Modifier = Modifier) {
     LaunchedEffect(current?.id) { current?.let { library.recordPlay(it.id) } }
 
     ProvideGlassConfig(glassConfig) {
+        val barVisible = !showSettings && collection == null && !showPlayer
+        val miniVisible = current != null && !showPlayer
         Box(modifier.fillMaxSize()) {
             Box(
                 Modifier
@@ -205,12 +221,13 @@ fun GlowApp(settings: SettingsStore, modifier: Modifier = Modifier) {
                         },
                     )
                 }
+                // داخل المصدر: فتُلتقط الخلفية المشتركة وقد تلاشت الصفوف قبل المشغّل والشريط.
+                BottomScrim(skin.bgBottom, barVisible, miniVisible)
             }
 
-            val barVisible = !showSettings && collection == null && !showPlayer
             val miniLift by animateDpAsState(if (barVisible) BarLift else 0.dp, label = "miniLift")
 
-            if (current != null && !showPlayer) {
+            if (miniVisible && current != null) {
                 ArtMiniPlayer(
                     track = current,
                     isPlaying = playerState.isPlaying,
@@ -262,5 +279,38 @@ fun GlowApp(settings: SettingsStore, modifier: Modifier = Modifier) {
                 )
             }
         }
+    }
+}
+
+/**
+ * طبقة بلون الخلفية أسفل الشاشة: تغطي منطقة المشغّل المصغّر والشريط وشريط التنقل،
+ * مع تلاشٍ ناعم فوقها، فلا تظهر الصفوف ولا الأغلفة خلفهما أو بينهما.
+ * تُرسم داخل مصدر الخلفية الزجاجية فيلتقطها الزجاج ولا يرى الصفوف.
+ */
+@Composable
+private fun BoxScope.BottomScrim(color: Color, barVisible: Boolean, miniVisible: Boolean) {
+    val solidTarget = when {
+        barVisible && miniVisible -> BarLift + MiniGap + MiniHeight
+        barVisible -> BarLift
+        miniVisible -> MiniGap + MiniHeight
+        else -> 0.dp
+    }
+    val solid by animateDpAsState(solidTarget, label = "scrimSolid")
+    if (solid <= 0.dp) return
+    val fade = minOf(solid, ScrimFade)
+    Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth()) {
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .height(fade)
+                .background(Brush.verticalGradient(listOf(color.copy(alpha = 0f), color))),
+        )
+        Box(Modifier.fillMaxWidth().height(solid).background(color))
+        Spacer(
+            Modifier
+                .fillMaxWidth()
+                .windowInsetsBottomHeight(WindowInsets.navigationBars)
+                .background(color),
+        )
     }
 }
