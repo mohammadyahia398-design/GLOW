@@ -54,6 +54,7 @@ import com.glow.app.ui.common.GlowDialog
 import com.glow.app.ui.common.GlowDialogAction
 import com.glow.app.ui.common.GlowIcon
 import com.glow.app.ui.common.GlowIconTap
+import com.glow.app.ui.common.GlowSettingsButton
 import com.glow.app.ui.common.GlowTopBar
 import com.glow.app.ui.common.IconKind
 import com.glow.app.media.addedLabel
@@ -70,15 +71,23 @@ data class MediaGroup(
     val tracks: List<Track>,
 )
 
-private enum class LibraryTab(val label: String) {
-    Tracks("الأغاني"),
-    Albums("الألبومات"),
-    Artists("الفنانون"),
-    Genres("الأنواع"),
-    Spotify("Spotify"),
-    Favorites("المفضلة"),
-    Playlists("قوائم التشغيل"),
+/** أقسام المكتبة. [barTabs] هي ما يظهر في الشريط السفلي؛ عدّلها لإضافة قسم أو إزالته. */
+enum class LibraryTab(val label: String, val icon: IconKind) {
+    Tracks("الأغاني", IconKind.Note),
+    Albums("الألبومات", IconKind.Album),
+    Artists("الفنانون", IconKind.Artist),
+    Genres("الأنواع", IconKind.Note),
+    Spotify("Spotify", IconKind.Note),
+    Favorites("المفضلة", IconKind.Heart),
+    Playlists("القوائم", IconKind.Playlist);
+
+    companion object {
+        val barTabs: List<LibraryTab> = listOf(Tracks, Albums, Artists, Favorites, Playlists)
+    }
 }
+
+/** مسافة سفلية تترك القوائم ظاهرة فوق الشريط الزجاجي والمشغّل المصغّر. */
+val LibraryBottomInset = 230.dp
 
 private const val UNKNOWN_ARTIST = "فنان غير معروف"
 
@@ -92,6 +101,7 @@ fun LibraryScreen(
     hasAudioAccess: Boolean,
     currentId: Long?,
     store: LibraryStore,
+    tab: LibraryTab,
     onRequestPermission: () -> Unit,
     onPlay: (List<Track>, Int) -> Unit,
     onOpen: (MediaGroup) -> Unit,
@@ -99,7 +109,6 @@ fun LibraryScreen(
     modifier: Modifier = Modifier,
 ) {
     val skin = LocalGlowSkin.current
-    var tab by remember { mutableStateOf(LibraryTab.Tracks) }
     var searching by remember { mutableStateOf(false) }
     var query by remember { mutableStateOf("") }
     var actionTrack by remember { mutableStateOf<Track?>(null) }
@@ -149,14 +158,11 @@ fun LibraryScreen(
                     searching = !searching
                     if (!searching) query = ""
                 }) { GlowIcon(IconKind.Search, if (searching) skin.accentText else skin.text) }
-                GlowIconTap("الإعدادات", onOpenSettings) {
-                    GlowIcon(IconKind.Settings, skin.text)
-                }
+                GlowSettingsButton(onOpenSettings, Modifier.padding(start = 4.dp, end = 8.dp))
             },
         )
         if (searching) SearchField(query) { query = it }
 
-        TabsRow(tab) { tab = it }
 
         Box(
             Modifier
@@ -165,8 +171,8 @@ fun LibraryScreen(
                 .clip(RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp))
                 .background(skin.panel),
         ) {
-            val pad = PaddingValues(top = 8.dp, bottom = 150.dp)
-            val gridPad = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 150.dp)
+            val pad = PaddingValues(top = 8.dp, bottom = LibraryBottomInset)
+            val gridPad = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = LibraryBottomInset)
             when {
                 !hasAudioAccess -> PermissionPrompt(onRequestPermission)
                 loaded && tracks.isEmpty() -> CenteredMessage("لا توجد موسيقى على هذا الجهاز")
@@ -254,33 +260,6 @@ fun LibraryScreen(
             onCreate = { store.createPlaylist(it, np.track?.id); newPlaylist = null },
             onDismiss = { newPlaylist = null },
         )
-    }
-}
-
-@Composable
-private fun TabsRow(selected: LibraryTab, onChange: (LibraryTab) -> Unit) {
-    val skin = LocalGlowSkin.current
-    val state = rememberLazyListState()
-    LaunchedEffect(selected) { state.animateScrollToItem(selected.ordinal) }
-    LazyRow(
-        state = state,
-        contentPadding = PaddingValues(horizontal = 24.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(22.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.fillMaxWidth().height(68.dp),
-    ) {
-        items(LibraryTab.values().toList()) { t ->
-            val isSelected = t == selected
-            val size by animateFloatAsState(if (isSelected) 28f else 16f, label = "tab")
-            Text(
-                text = t.label,
-                color = if (isSelected) skin.text else skin.textSecondary,
-                fontSize = size.sp,
-                fontWeight = FontWeight.Normal,
-                maxLines = 1,
-                modifier = Modifier.clickable { onChange(t) },
-            )
-        }
     }
 }
 
