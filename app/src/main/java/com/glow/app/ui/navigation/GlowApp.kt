@@ -63,6 +63,7 @@ import com.glow.app.ui.library.LibraryTab
 import com.glow.app.ui.library.MediaGroup
 import com.glow.app.ui.library.LibraryScreen
 import com.glow.app.ui.nowplaying.ArtMiniPlayer
+import com.glow.app.ui.nowplaying.ArtMiniPlayerHeight
 import com.glow.app.ui.nowplaying.NowPlayingScreen
 import com.glow.app.ui.theme.LocalGlowSkin
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -72,7 +73,7 @@ import kotlin.random.Random
 private val BarLift = 80.dp
 
 /** ارتفاع المشغّل المصغّر والفراغ تحته (يطابق [ArtMiniPlayer] وهوامشه أدناه). */
-private val MiniHeight = 72.dp
+private val MiniHeight = ArtMiniPlayerHeight
 private val MiniGap = 12.dp
 
 /** طول التلاشي فوق أعلى عنصر سفلي (مشغّل أو شريط). */
