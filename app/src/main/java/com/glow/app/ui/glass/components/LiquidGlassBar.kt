@@ -117,8 +117,8 @@ import kotlin.math.roundToInt
 data class LiquidBarSpec(
     val height: Dp = 72.dp,
     val innerPadding: Dp = 5.dp,
-    val lensGrow: Dp = 22.dp,
-    val lensWiden: Float = 0.35f,
+    val lensGrow: Dp = 16.dp,
+    val lensWiden: Float = 0.80f,
     val iconSize: Dp = 26.dp,
     val labelSize: TextUnit = 12.sp,
     val barStyle: GlassStyle = GlassStyle.Regular.copy(
@@ -134,9 +134,9 @@ data class LiquidBarSpec(
     val pressDamping: Float = 0.60f,
     val pressStiffness: Float = 300f,
     val magnify: Float = 1.25f,
-    val bleed: Dp = 24.dp,
-    val bezel: Dp = 18.dp,
-    val thickness: Dp = 40.dp,
+    val bleed: Dp = 36.dp,
+    val bezel: Dp = 26.dp,
+    val thickness: Dp = 56.dp,
     val refractiveIndex: Float = 1.5f,
     val dispersion: Float = 0.06f,
 )
