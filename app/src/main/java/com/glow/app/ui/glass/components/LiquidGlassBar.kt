@@ -103,7 +103,8 @@ import kotlin.math.roundToInt
  * @property height ارتفاع الكبسولة.
  * @property innerPadding الفراغ بين حافة الكبسولة والعدسة وهي مسطّحة.
  * @property lensGrow مقدار ازدياد ارتفاع العدسة عند اللمس (فتخرج من الكبسولة).
- * @property lensWiden نسبة ازدياد عرضها عند اللمس.
+ * @property lensWiden نسبة ازدياد عرضها عند اللمس الكامل (نسبة إلى عرض العنصر الواحد).
+ * @property restWiden نسبة ازدياد عرضها وهي ساكنة؛ تبقى كبسولة أعرض من ارتفاعها ولا تعود دائرة.
  * @property barFill تلوين الكبسولة (خفيف: الزجاج يُظهر ما تحته).
  * @property pressDamping ارتداد انتفاخ العدسة وتسطّحها (أقل = أكثر ارتداداً).
  * @property magnify تكبير مركز العدسة عند اللمس الكامل (1 يعطّله).
@@ -119,6 +120,7 @@ data class LiquidBarSpec(
     val innerPadding: Dp = 5.dp,
     val lensGrow: Dp = 16.dp,
     val lensWiden: Float = 0.80f,
+    val restWiden: Float = 0.25f,
     val iconSize: Dp = 26.dp,
     val labelSize: TextUnit = 12.sp,
     val barStyle: GlassStyle = GlassStyle.Regular.copy(
@@ -134,11 +136,11 @@ data class LiquidBarSpec(
     val pressDamping: Float = 0.60f,
     val pressStiffness: Float = 300f,
     val magnify: Float = 1.25f,
-    val bleed: Dp = 36.dp,
-    val bezel: Dp = 26.dp,
-    val thickness: Dp = 56.dp,
+    val bleed: Dp = 24.dp,
+    val bezel: Dp = 12.dp,
+    val thickness: Dp = 22.dp,
     val refractiveIndex: Float = 1.5f,
-    val dispersion: Float = 0.06f,
+    val dispersion: Float = 0.02f,
 )
 
 /**
@@ -260,11 +262,13 @@ private fun LiquidBarBody(
     val lensW = itemWidthPx()
     val lensH = (heightPx - 2f * padPx).coerceAtLeast(0f)
     val maxG = 1.3f
-    val layerW = lensW * (1f + spec.lensWiden * maxG) + 2f * bleedPx
+    // معامل العرض: restWiden وهي ساكنة، ويصل إلى lensWiden عند اللمس الكامل (g = 1).
+    fun widenAt(g: Float): Float = 1f + spec.restWiden + (spec.lensWiden - spec.restWiden) * g
+    val layerW = lensW * widenAt(maxG) + 2f * bleedPx
     val layerH = lensH + growPx * maxG + 2f * bleedPx
 
     fun grownG(): Float = pressState.value.coerceIn(0f, maxG)
-    fun halfWidth(g: Float): Float = lensW / 2f * (1f + spec.lensWiden * g)
+    fun halfWidth(g: Float): Float = lensW / 2f * widenAt(g)
     fun halfHeight(g: Float): Float = lensH / 2f + growPx / 2f * g
 
     // يمنع خروج العدسة المنتفخة يمين الكبسولة أو يسارها.
