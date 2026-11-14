@@ -117,28 +117,28 @@ import kotlin.math.roundToInt
 data class LiquidBarSpec(
     val height: Dp = 72.dp,
     val innerPadding: Dp = 5.dp,
-    val lensGrow: Dp = 14.dp,
-    val lensWiden: Float = 0.45f,
+    val lensGrow: Dp = 22.dp,
+    val lensWiden: Float = 0.35f,
     val iconSize: Dp = 26.dp,
     val labelSize: TextUnit = 12.sp,
     val barStyle: GlassStyle = GlassStyle.Regular.copy(
-        tintAlpha = 0.12f,
-        fallbackTintAlpha = 0.34f,
-        borderAlpha = 0.50f,
-        highlightAlpha = 0.60f,
-        specularAlpha = 0.28f,
+        tintAlpha = 0.06f,
+        fallbackTintAlpha = 0.30f,
+        borderAlpha = 0.40f,
+        highlightAlpha = 0.40f,
+        specularAlpha = 0.10f,
     ),
-    val barFill: Color = Color(0xFF0B1E28).copy(alpha = 0.26f),
+    val barFill: Color = Color(0xFF1B2A33).copy(alpha = 0.45f),
     val springDamping: Float = 0.72f,
     val springStiffness: Float = 380f,
     val pressDamping: Float = 0.60f,
     val pressStiffness: Float = 300f,
-    val magnify: Float = 1.30f,
-    val bleed: Dp = 14.dp,
-    val bezel: Dp = 10.dp,
-    val thickness: Dp = 20.dp,
+    val magnify: Float = 1.25f,
+    val bleed: Dp = 24.dp,
+    val bezel: Dp = 18.dp,
+    val thickness: Dp = 40.dp,
     val refractiveIndex: Float = 1.5f,
-    val dispersion: Float = 0.04f,
+    val dispersion: Float = 0.06f,
 )
 
 /**
@@ -346,6 +346,16 @@ private fun LiquidBarBody(
             ) {}
             // تلوين خفيف؛ داخل المصدر فتراه العدسة معه.
             Box(Modifier.matchParentSize().background(spec.barFill, shape))
+            // لمعة علوية ناعمة تعطي الكبسولة عمقاً زجاجياً.
+            Box(
+                Modifier.matchParentSize().background(
+                    Brush.verticalGradient(
+                        colors = listOf(Color.White.copy(alpha = 0.12f), Color.Transparent),
+                        endY = with(density) { spec.height.toPx() } * 0.5f,
+                    ),
+                    shape,
+                ),
+            )
 
             Row(
                 modifier = Modifier
@@ -550,6 +560,16 @@ private fun DrawScope.drawLensRim(
         size = Size(width - glow, height - glow),
         cornerRadius = CornerRadius((height - glow) / 2f),
         style = Stroke(width = glow),
+    )
+
+    // خط داكن رفيع خارج الحافة: يفصل العدسة عمّا تحتها بحدّ واضح.
+    val hair = 1.dp.toPx()
+    drawRoundRect(
+        color = Color.Black.copy(alpha = 0.10f + 0.22f * p),
+        topLeft = tl - Offset(hair / 2f, hair / 2f),
+        size = Size(width + hair, height + hair),
+        cornerRadius = CornerRadius((height + hair) / 2f),
+        style = Stroke(width = hair),
     )
 
     // الإطار اللامع: أقوى عند الزاويتين المقابلتين للضوء.
