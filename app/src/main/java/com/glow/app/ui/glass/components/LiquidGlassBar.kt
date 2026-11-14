@@ -10,8 +10,8 @@ import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.spring
-import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.background
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -63,7 +64,9 @@ import androidx.compose.ui.graphics.layer.drawLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.layout
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -89,46 +92,52 @@ import com.glow.app.ui.glass.surfaces.GlassSurface
 import com.glow.app.ui.glass.surfaces.glassBackdropSource
 import com.glow.app.ui.glass.surfaces.rememberGlassBackdrop
 import kotlinx.coroutines.launch
+import kotlin.math.max
+import kotlin.math.min
 import kotlin.math.roundToInt
 
 /**
  * كل ما يُعدَّل في شكل الشريط الزجاجي السائل في مكان واحد.
- * مرّر نسخة معدّلة: `LiquidBarSpec(magnify = 1.4f, lensGrow = 0.dp)`.
  *
  * @property height ارتفاع الكبسولة.
- * @property innerPadding الفراغ بين حافة الكبسولة والعدسة.
- * @property lensGrow مقدار تضخّم العدسة أثناء السحب (0 يعطّله).
- * @property barStyle نمط زجاج الكبسولة.
- * @property magnify تكبير ما تحت العدسة (1 يعطّله). هو ما يجعل الأيقونة والعنوان يبدوان مكبَّرين داخلها.
- * @property bleed عرض المحتوى الإضافي الذي تلتقطه العدسة خارج حدّها لتنكسر به حافتها.
- * @property edgeWidth عرض حلقة الانكسار عند حافة العدسة.
- * @property dispersion شدّة التشتّت اللوني عند الحافة (0 يعطّله).
- * @property springDamping ارتداد حركة العدسة (أقل = أكثر ارتداداً).
- * @property springStiffness صلابة الحركة (أعلى = أسرع).
+ * @property innerPadding الفراغ بين حافة الكبسولة والعدسة وهي مسطّحة.
+ * @property lensGrow مقدار ازدياد ارتفاع العدسة عند اللمس (فتخرج من الكبسولة).
+ * @property lensWiden نسبة ازدياد عرضها عند اللمس.
+ * @property barFill تلوين الكبسولة (خفيف: الزجاج يُظهر ما تحته).
+ * @property pressDamping ارتداد انتفاخ العدسة وتسطّحها (أقل = أكثر ارتداداً).
+ * @property magnify تكبير مركز العدسة عند اللمس الكامل (1 يعطّله).
+ * @property bleed عرض المحتوى الحقيقي الذي تلتقطه العدسة خارج حدّها لتنكسر به حافتها.
+ * @property bezel عرض منطقة الحافة المنحنية التي يحدث فيها الانكسار.
+ * @property thickness سماكة الزجاج؛ تحدد شدّة الانكسار عند الحافة.
+ * @property refractiveIndex معامل الانكسار (الزجاج ≈ 1.5).
+ * @property dispersion تشتّت لوني خفيف جداً عند الحافة (0 يعطّله).
  */
 @Immutable
 data class LiquidBarSpec(
     val height: Dp = 72.dp,
     val innerPadding: Dp = 5.dp,
-    val lensGrow: Dp = 12.dp,
+    val lensGrow: Dp = 18.dp,
+    val lensWiden: Float = 0.5f,
     val iconSize: Dp = 26.dp,
     val labelSize: TextUnit = 12.sp,
     val barStyle: GlassStyle = GlassStyle.Regular.copy(
-        tintAlpha = 0.26f,
-        fallbackTintAlpha = 0.42f,
-        borderAlpha = 0.40f,
-        highlightAlpha = 0.45f,
+        tintAlpha = 0.12f,
+        fallbackTintAlpha = 0.34f,
+        borderAlpha = 0.50f,
+        highlightAlpha = 0.60f,
+        specularAlpha = 0.28f,
     ),
-    val lensStyle: GlassStyle = GlassStyle.Clear,
-    val lensAccentAlpha: Float = 0.14f,
-    val springDamping: Float = 0.74f,
-    val springStiffness: Float = 420f,
-    val magnify: Float = 1.22f,
-    val bleed: Dp = 10.dp,
-    val edgeWidth: Dp = 16.dp,
-    val dispersion: Float = 0.35f,
-    val barFill: Color = Color(0xFFF8F8FA).copy(alpha = 0.93f),
-    val irisAlpha: Float = 0.80f,
+    val barFill: Color = Color(0xFF0B1E28).copy(alpha = 0.26f),
+    val springDamping: Float = 0.72f,
+    val springStiffness: Float = 380f,
+    val pressDamping: Float = 0.60f,
+    val pressStiffness: Float = 300f,
+    val magnify: Float = 1.12f,
+    val bleed: Dp = 20.dp,
+    val bezel: Dp = 22.dp,
+    val thickness: Dp = 34.dp,
+    val refractiveIndex: Float = 1.5f,
+    val dispersion: Float = 0.04f,
 )
 
 /**
@@ -144,11 +153,12 @@ class LiquidBarItem(
 )
 
 /**
- * شريط تنقل Liquid Glass: كبسولة زجاجية فيها «عدسة» حقيقية تنزلق إلى العنصر المحدد.
+ * شريط تنقل Liquid Glass: كبسولة زجاجية فيها عدسة زجاجية تنزلق إلى العنصر المحدد.
  *
- * العدسة ليست لوناً مرسوماً فوق الشريط: هي نسخة مكبَّرة من الشريط نفسه (الكبسولة
- * والأيقونات والعناوين) تُرسم داخلها، وحافتها تكسر الضوء بتشتّت لوني على API 33+،
- * وتبقى مكبِّرة بلا انكسار على الأقدم. يمكن سحبها بالإصبع بين العناصر.
+ * العدسة وهي مسطّحة (بلا لمس) قطعة زجاج رقيقة. عند اللمس أو السحب تنتفخ كقطعة زجاج
+ * محدّبة: ترتفع فتخرج من الكبسولة، وتنكسر عند حافتها الصور الحقيقية التي تحتها
+ * (محتوى التطبيق خلف الشريط والكبسولة نفسها) وفق قانون سنيل، ويبقى مركزها شبه ثابت.
+ * عند الإفلات تعود مسطّحة بحركة نابضية.
  *
  * قواعد التركيب كما في بقية النظام الزجاجي: يوضع كأخٍ لمصدر الخلفية وفوقه،
  * مع [backdrop] المشترك. الهوامش من المستدعي (navigationBarsPadding وغيرها).
@@ -163,8 +173,8 @@ fun LiquidGlassBar(
     modifier: Modifier = Modifier,
     backdrop: GlassBackdrop? = null,
     spec: LiquidBarSpec = LiquidBarSpec(),
-    accent: Color = Color(0xFF0891B2),
-    unselected: Color = Color(0xFF4A4A50),
+    accent: Color = Color(0xFF22D3EE),
+    unselected: Color = Color(0xFFF2F6F8),
 ) {
     if (items.isEmpty()) return
     val systemRtl = LocalLayoutDirection.current == LayoutDirection.Rtl
@@ -197,7 +207,9 @@ private fun LiquidBarBody(
 
     val position = remember { Animatable(selectedIndex.toFloat()) }
     var dragging by remember { mutableStateOf(false) }
+    var pressed by remember { mutableStateOf(false) }
     var barWidthPx by remember { mutableFloatStateOf(0f) }
+    var barRoot by remember { mutableStateOf(Offset.Zero) }
     val dragTarget = remember { floatArrayOf(0f) }
     val lastHapticIndex = remember { intArrayOf(-1) }
 
@@ -217,10 +229,16 @@ private fun LiquidBarBody(
         if (!dragging) position.animateTo(selectedIndex.toFloat(), currentMoveSpec)
     }
 
-    val growState = animateFloatAsState(
-        targetValue = if (dragging) 1f else 0f,
-        animationSpec = glassTween(reduceMotion, 160),
-        label = "liquidGrow",
+    // درجة انتفاخ العدسة: 0 مسطّحة، 1 منتفخة كلياً. نابض فيتجاوز قليلاً ثم يستقر.
+    val pressSpec: AnimationSpec<Float> = if (reduceMotion) {
+        snap()
+    } else {
+        spring<Float>(dampingRatio = spec.pressDamping, stiffness = spec.pressStiffness)
+    }
+    val pressState = animateFloatAsState(
+        targetValue = if (dragging || pressed) 1f else 0f,
+        animationSpec = pressSpec,
+        label = "liquidPress",
     )
     val activeIndex by remember(count) {
         derivedStateOf { position.value.roundToInt().coerceIn(0, lastIndex) }
@@ -230,29 +248,38 @@ private fun LiquidBarBody(
     val growPx = with(density) { spec.lensGrow.toPx() }
     val heightPx = with(density) { spec.height.toPx() }
     val bleedPx = with(density) { spec.bleed.toPx() }
-    val edgePx = with(density) { spec.edgeWidth.toPx() }
+    val bezelPx = with(density) { spec.bezel.toPx() }
+    val thickPx = with(density) { spec.thickness.toPx() }
     val shape = RoundedCornerShape(percent = 50)
 
     fun itemWidthPx(): Float =
         if (count > 0) ((barWidthPx - 2f * padPx) / count).coerceAtLeast(0f) else 0f
 
-    // أبعاد العدسة المرئية، وطبقتها الأكبر منها بمقدار bleed من كل جهة.
+    // أبعاد العدسة وهي مسطّحة، وأكبر أبعاد تبلغها (مع تجاوز النابض 1.3).
     val lensW = itemWidthPx()
     val lensH = (heightPx - 2f * padPx).coerceAtLeast(0f)
-    val layerW = lensW + 2f * bleedPx
-    val layerH = lensH + 2f * bleedPx
-    val lensEffect = rememberLensEffect(
-        layerWidth = layerW,
-        layerHeight = layerH,
-        insetPx = bleedPx,
-        cornerPx = lensH / 2f,
-        edgePx = edgePx,
-        bendPx = bleedPx * 0.95f,
-        dispersion = spec.dispersion,
-    )
-    val lensShape = remember(bleedPx) { InsetCapsuleShape(bleedPx) }
+    val maxG = 1.3f
+    val layerW = lensW * (1f + spec.lensWiden * maxG) + 2f * bleedPx
+    val layerH = lensH + growPx * maxG + 2f * bleedPx
 
-    // مصدر خاص بالعدسة: الكبسولة وعناصرها، لتُرسم مكبَّرة داخلها.
+    fun grownG(): Float = pressState.value.coerceIn(0f, maxG)
+    fun halfWidth(g: Float): Float = lensW / 2f * (1f + spec.lensWiden * g)
+    fun halfHeight(g: Float): Float = lensH / 2f + growPx / 2f * g
+
+    // يمنع خروج العدسة المنتفخة يمين الكبسولة أو يسارها.
+    fun layerLeft(): Float {
+        val hw = halfWidth(grownG())
+        val raw = padPx + (position.value + 0.5f) * itemWidthPx()
+        val cx = max(hw, min(raw, barWidthPx - hw))
+        return cx - layerW / 2f
+    }
+    fun layerTop(): Float = (heightPx - layerH) / 2f
+
+    val effectHolder = remember {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) LensEffectHolder() else null
+    }
+
+    // مصدر خاص بالعدسة: الكبسولة وعناصرها (فوق الخلفية الحقيقية).
     val barBackdrop = rememberGlassBackdrop()
 
     fun finishDrag() {
@@ -267,6 +294,19 @@ private fun LiquidBarBody(
         modifier
             .height(spec.height)
             .onSizeChanged { barWidthPx = it.width.toFloat() }
+            .onGloballyPositioned { barRoot = it.positionInRoot() }
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onPress = {
+                        pressed = true
+                        try {
+                            tryAwaitRelease()
+                        } finally {
+                            pressed = false
+                        }
+                    },
+                )
+            }
             .pointerInput(count, padPx) {
                 detectHorizontalDragGestures(
                     onDragStart = {
@@ -303,7 +343,7 @@ private fun LiquidBarBody(
                 style = spec.barStyle,
                 depth = GlassDepth.Floating,
             ) {}
-            // تعبئة بيضاء حليبية كما في المرجع؛ داخل المصدر فتكبّرها العدسة معه.
+            // تلوين خفيف؛ داخل المصدر فتراه العدسة معه.
             Box(Modifier.matchParentSize().background(spec.barFill, shape))
 
             Row(
@@ -327,50 +367,89 @@ private fun LiquidBarBody(
             }
         }
 
-        // 2) العدسة: تتحرك وتتضخم داخل مرحلة التخطيط والرسم فلا تُعاد التركيبة كل إطار.
-        Box(
-            Modifier
-                .absoluteOffset {
-                    IntOffset(
-                        (padPx + position.value * itemWidthPx() - bleedPx).roundToInt(),
-                        (padPx - bleedPx).roundToInt(),
-                    )
-                }
-                .layout { measurable, _ ->
-                    val w = layerW.roundToInt().coerceAtLeast(0)
-                    val h = layerH.roundToInt().coerceAtLeast(0)
-                    val placeable = measurable.measure(Constraints.fixed(w, h))
-                    layout(w, h) { placeable.place(0, 0) }
-                }
-                .graphicsLayer {
-                    val extra = growPx * growState.value
-                    scaleX = if (lensW > 0f) 1f + extra / lensW else 1f
-                    scaleY = if (lensH > 0f) 1f + extra / lensH else 1f
-                },
-        ) {
-            // المحتوى المكبَّر + الانكسار عند الحافة.
+        // 2) العدسة. كل شيء فيها يُقرأ في مرحلة التخطيط والرسم فلا تُعاد التركيبة كل إطار.
+        if (lensW > 0f && layerW > 0f && layerH > 0f) {
             Box(
                 Modifier
-                    .matchParentSize()
-                    .graphicsLayer {
-                        this.shape = lensShape
-                        this.clip = true
-                        this.renderEffect = lensEffect
-                    }
-                    .drawBehind {
-                        if (barBackdrop.layer.isReleased) return@drawBehind
-                        val left = padPx + position.value * itemWidthPx() - bleedPx
-                        val top = padPx - bleedPx
-                        val pivot = Offset(left + size.width / 2f, top + size.height / 2f)
-                        translate(left = -left, top = -top) {
-                            scale(spec.magnify, spec.magnify, pivot) {
-                                drawLayer(barBackdrop.layer)
-                            }
-                        }
+                    .absoluteOffset { IntOffset(layerLeft().roundToInt(), layerTop().roundToInt()) }
+                    .layout { measurable, _ ->
+                        val w = layerW.roundToInt().coerceAtLeast(0)
+                        val h = layerH.roundToInt().coerceAtLeast(0)
+                        val placeable = measurable.measure(Constraints.fixed(w, h))
+                        layout(w, h) { placeable.place(0, 0) }
                     },
-            )
-            // الحافة اللامعة والإضاءة: فوق المحتوى المنكسر فتبقى حادّة.
-            Box(Modifier.matchParentSize().drawBehind { drawLensRim(bleedPx, spec.irisAlpha) })
+            ) {
+                // المحتوى المنكسر: الخلفية الحقيقية تحت الشريط ثم الكبسولة، مع انكسار الحافة.
+                Box(
+                    Modifier
+                        .matchParentSize()
+                        .graphicsLayer {
+                            val g = grownG()
+                            val hw = halfWidth(g)
+                            val hh = halfHeight(g)
+                            this.shape = LensClipShape(
+                                left = layerW / 2f - hw,
+                                top = layerH / 2f - hh,
+                                right = layerW / 2f + hw,
+                                bottom = layerH / 2f + hh,
+                                corner = hh,
+                            )
+                            this.clip = true
+                            this.renderEffect =
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && effectHolder != null && g > 0.02f) {
+                                    effectHolder.effect(
+                                        layerW = layerW,
+                                        layerH = layerH,
+                                        halfW = hw,
+                                        halfH = hh,
+                                        corner = min(hh, hw),
+                                        bezel = bezelPx,
+                                        thick = thickPx * g,
+                                        index = spec.refractiveIndex,
+                                        dispersion = spec.dispersion,
+                                    )
+                                } else {
+                                    null
+                                }
+                        }
+                        .drawBehind {
+                            val g = grownG()
+                            val mag = 1f + (spec.magnify - 1f) * min(g, 1f)
+                            val left = layerLeft()
+                            val top = layerTop()
+                            val pivot = Offset(size.width / 2f, size.height / 2f)
+                            scale(mag, mag, pivot) {
+                                val source = backdrop
+                                if (source != null && !source.layer.isReleased) {
+                                    val delta = source.sourceOrigin - (barRoot + Offset(left, top))
+                                    translate(left = delta.x, top = delta.y) {
+                                        drawLayer(source.layer)
+                                    }
+                                }
+                                if (!barBackdrop.layer.isReleased) {
+                                    translate(left = -left, top = -top) {
+                                        drawLayer(barBackdrop.layer)
+                                    }
+                                }
+                            }
+                        },
+                )
+                // الحافة اللامعة والإضاءة: فوق المحتوى المنكسر فتبقى حادّة.
+                Box(
+                    Modifier.matchParentSize().drawBehind {
+                        val g = grownG()
+                        val hw = halfWidth(g)
+                        val hh = halfHeight(g)
+                        drawLensRim(
+                            left = size.width / 2f - hw,
+                            top = size.height / 2f - hh,
+                            width = hw * 2f,
+                            height = hh * 2f,
+                            press = g,
+                        )
+                    },
+                )
+            }
         }
     }
 }
@@ -423,164 +502,129 @@ private fun RowScope.LiquidBarTab(
     }
 }
 
-/** كبسولة مزاحة إلى الداخل بمقدار [inset] من كل جهة: حدّ العدسة المرئي داخل طبقتها الأكبر. */
-private class InsetCapsuleShape(private val inset: Float) : Shape {
+/** مستطيل مدوّر بإحداثيات صريحة: حدّ العدسة المرئي داخل طبقتها الأكبر. */
+private class LensClipShape(
+    private val left: Float,
+    private val top: Float,
+    private val right: Float,
+    private val bottom: Float,
+    private val corner: Float,
+) : Shape {
     override fun createOutline(
         size: Size,
         layoutDirection: LayoutDirection,
         density: Density,
     ): Outline {
-        val w = (size.width - 2f * inset).coerceAtLeast(0f)
-        val h = (size.height - 2f * inset).coerceAtLeast(0f)
-        val r = h / 2f
-        return Outline.Rounded(RoundRect(inset, inset, inset + w, inset + h, CornerRadius(r, r)))
+        val r = corner.coerceAtLeast(0f)
+        return Outline.Rounded(RoundRect(left, top, right, bottom, CornerRadius(r, r)))
     }
 }
 
-/** يرسم حافة العدسة: لمعة علوية، إطار مضيء، إضاءة داخلية، وطيف لوني خفيف. */
-private fun DrawScope.drawLensRim(inset: Float, irisAlpha: Float) {
-    val w = size.width - 2f * inset
-    val h = size.height - 2f * inset
-    if (w <= 0f || h <= 0f) return
-    val tl = Offset(inset, inset)
-    val lensSize = Size(w, h)
-    val radius = CornerRadius(h / 2f)
-    val center = Offset(inset + w / 2f, inset + h / 2f)
+/**
+ * يرسم حافة العدسة: جسم زجاجي رقيق مسطّح بلا لمس، وعند اللمس تقوى الإضاءة الحادّة
+ * على الحافة. لا ألوان مرسومة: أي لون على الحافة يأتي من انكسار ما تحتها.
+ */
+private fun DrawScope.drawLensRim(
+    left: Float,
+    top: Float,
+    width: Float,
+    height: Float,
+    press: Float,
+) {
+    if (width <= 0f || height <= 0f) return
+    val p = press.coerceIn(0f, 1f)
+    val tl = Offset(left, top)
+    val radius = CornerRadius(height / 2f)
 
-    // لمعة علوية ناعمة
+    // جسم الزجاج: ضبابي قليلاً وهو مسطّح، وأصفى عند الانتفاخ.
     drawRoundRect(
-        brush = Brush.verticalGradient(
-            colors = listOf(Color.White.copy(alpha = 0.30f), Color.White.copy(alpha = 0f)),
-            startY = inset,
-            endY = inset + h * 0.45f,
-        ),
-        topLeft = Offset(inset + w * 0.12f, inset + 2.dp.toPx()),
-        size = Size(w * 0.76f, h * 0.40f),
-        cornerRadius = CornerRadius(h * 0.20f),
-    )
-
-    // إضاءة داخلية عريضة
-    val glow = 4.dp.toPx()
-    drawRoundRect(
-        color = Color.White.copy(alpha = 0.08f),
-        topLeft = tl + Offset(glow / 2f + 1.dp.toPx(), glow / 2f + 1.dp.toPx()),
-        size = Size(w - glow - 2.dp.toPx(), h - glow - 2.dp.toPx()),
-        cornerRadius = CornerRadius((h - glow) / 2f),
-        style = Stroke(width = glow),
-    )
-
-    // ظل داخلي رمادي خفيف من جهة البداية كما في المرجع
-    drawRoundRect(
-        brush = Brush.horizontalGradient(
-            colors = listOf(Color.Black.copy(alpha = 0.08f), Color.Transparent),
-            startX = inset,
-            endX = inset + w * 0.45f,
-        ),
+        color = Color.White.copy(alpha = 0.13f - 0.09f * p),
         topLeft = tl,
-        size = lensSize,
+        size = Size(width, height),
         cornerRadius = radius,
     )
 
-    // طيف لوني على الحافة
-    val iris = 2.dp.toPx()
+    // إضاءة داخلية ناعمة على طول الحافة.
+    val glow = 5.dp.toPx()
     drawRoundRect(
-        brush = Brush.sweepGradient(
-            colors = listOf(
-                Color(0xFFFF6AD5).copy(alpha = irisAlpha),
-                Color(0xFF8C7CFF).copy(alpha = irisAlpha),
-                Color(0xFF5AE1FF).copy(alpha = irisAlpha),
-                Color(0xFFFFE66D).copy(alpha = irisAlpha),
-                Color(0xFFFF6AD5).copy(alpha = irisAlpha),
-            ),
-            center = center,
-        ),
-        topLeft = tl + Offset(1.5.dp.toPx(), 1.5.dp.toPx()),
-        size = Size(w - 3.dp.toPx(), h - 3.dp.toPx()),
-        cornerRadius = CornerRadius((h - 3.dp.toPx()) / 2f),
-        style = Stroke(width = iris),
+        color = Color.White.copy(alpha = 0.05f + 0.09f * p),
+        topLeft = tl + Offset(glow / 2f, glow / 2f),
+        size = Size(width - glow, height - glow),
+        cornerRadius = CornerRadius((height - glow) / 2f),
+        style = Stroke(width = glow),
     )
 
-    // الإطار الخارجي المضيء: أقوى عند أعلى اليسار وأسفل اليمين
-    val rim = 1.5.dp.toPx()
+    // الإطار اللامع: أقوى عند الزاويتين المقابلتين للضوء.
+    val rim = 1.2.dp.toPx()
     drawRoundRect(
         brush = Brush.linearGradient(
             colors = listOf(
-                Color.White.copy(alpha = 0.95f),
-                Color.White.copy(alpha = 0.18f),
-                Color.White.copy(alpha = 0.60f),
+                Color.White.copy(alpha = 0.55f + 0.40f * p),
+                Color.White.copy(alpha = 0.10f),
+                Color.White.copy(alpha = 0.40f + 0.30f * p),
             ),
             start = tl,
-            end = tl + Offset(w, h),
+            end = tl + Offset(width, height),
         ),
         topLeft = tl + Offset(rim / 2f, rim / 2f),
-        size = Size(w - rim, h - rim),
-        cornerRadius = CornerRadius((h - rim) / 2f),
+        size = Size(width - rim, height - rim),
+        cornerRadius = CornerRadius((height - rim) / 2f),
         style = Stroke(width = rim),
     )
 }
 
 /**
- * تأثير الانكسار عند حافة العدسة (API 33+)، أو null على الأقدم فيبقى التكبير وحده.
- * يُبنى مرة لكل تغيّر في الأبعاد ولا يُعاد في كل إطار.
+ * يبني تأثير الانكسار (API 33+). يحتفظ بالشيدر ويحدّث قيمه في كل استدعاء،
+ * فلا يُنشأ شيدر جديد في كل إطار.
  */
-@Composable
-private fun rememberLensEffect(
-    layerWidth: Float,
-    layerHeight: Float,
-    insetPx: Float,
-    cornerPx: Float,
-    edgePx: Float,
-    bendPx: Float,
-    dispersion: Float,
-): RenderEffect? = remember(layerWidth, layerHeight, insetPx, cornerPx, edgePx, bendPx, dispersion) {
-    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU || layerWidth <= 0f || layerHeight <= 0f) {
-        null
-    } else {
-        createLensEffect(layerWidth, layerHeight, insetPx, cornerPx, edgePx, bendPx, dispersion)
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
+private class LensEffectHolder {
+    private val shader = RuntimeShader(LensShader.SOURCE)
+
+    fun effect(
+        layerW: Float,
+        layerH: Float,
+        halfW: Float,
+        halfH: Float,
+        corner: Float,
+        bezel: Float,
+        thick: Float,
+        index: Float,
+        dispersion: Float,
+    ): RenderEffect {
+        shader.setFloatUniform("uSize", layerW, layerH)
+        shader.setFloatUniform("uHalf", halfW, halfH)
+        shader.setFloatUniform("uCorner", corner)
+        shader.setFloatUniform("uBezel", bezel)
+        shader.setFloatUniform("uThick", thick)
+        shader.setFloatUniform("uIndex", index)
+        shader.setFloatUniform("uDisp", dispersion)
+        return AndroidRenderEffect.createRuntimeShaderEffect(shader, "content").asComposeRenderEffect()
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.TIRAMISU)
-private fun createLensEffect(
-    layerWidth: Float,
-    layerHeight: Float,
-    insetPx: Float,
-    cornerPx: Float,
-    edgePx: Float,
-    bendPx: Float,
-    dispersion: Float,
-): RenderEffect {
-    val shader = RuntimeShader(LensShader.SOURCE)
-    shader.setFloatUniform("uSize", layerWidth, layerHeight)
-    shader.setFloatUniform("uInset", insetPx)
-    shader.setFloatUniform("uCorner", cornerPx)
-    shader.setFloatUniform("uEdgeWidth", edgePx)
-    shader.setFloatUniform("uBend", bendPx)
-    shader.setFloatUniform("uDispersion", dispersion)
-    return AndroidRenderEffect.createRuntimeShaderEffect(shader, "content").asComposeRenderEffect()
-}
-
 /**
- * شيدر AGSL لعدسة الشريط.
+ * شيدر AGSL لزجاج محدّب فيزيائي.
  *
- * الطبقة أكبر من العدسة المرئية بمقدار uInset من كل جهة، فيوجد محتوى حقيقي خارج حدّها.
- * عند الحافة يُقرأ اللون من موضع أبعد نحو الخارج بإزاحة تقوى عند الحدّ وتتلاشى نحو
- * الداخل، فيُضغط ما وراء الحافة داخل حلقة الانكسار كما في عدسة محدّبة. كل قناة لونية
- * تُقرأ بإزاحة مختلفة قليلاً (تشتّت لوني)، مع تفتيح بسيط عند الحدّ.
+ * الحافة سطح محدّب بمنحنى «سكوِركل» ارتفاعه h(t) حيث t عمق البكسل داخل منطقة الحافة.
+ * ميل السطح يعطي زاوية سقوط، وقانون سنيل يعطي زاوية الانكسار، والإزاحة الجانبية =
+ * السماكة المتبقية × tan(زاوية السقوط − زاوية الانكسار). تُقرأ الألوان من موضع أبعد
+ * نحو الخارج فيُضغط ما وراء الحافة داخلها كما في كرة زجاجية. المركز مسطّح فلا يتشوّه.
+ * إن كانت السماكة صفراً (العدسة مسطّحة) لا يتغير شيء.
  */
 private object LensShader {
     const val SOURCE: String = """
 uniform shader content;
 uniform float2 uSize;
-uniform float uInset;
+uniform float2 uHalf;
 uniform float uCorner;
-uniform float uEdgeWidth;
-uniform float uBend;
-uniform float uDispersion;
+uniform float uBezel;
+uniform float uThick;
+uniform float uIndex;
+uniform float uDisp;
 
 float lensSdf(float2 p) {
-    float2 halfSize = uSize * 0.5 - float2(uInset);
-    float2 q = abs(p) - halfSize + float2(uCorner);
+    float2 q = abs(p) - uHalf + float2(uCorner);
     return min(max(q.x, q.y), 0.0) + length(max(q, float2(0.0))) - uCorner;
 }
 
@@ -592,7 +636,7 @@ half4 main(float2 fragCoord) {
     float2 p = fragCoord - uSize * 0.5;
     float depth = -lensSdf(p);
 
-    if (depth >= uEdgeWidth || uBend <= 0.0) {
+    if (depth >= uBezel || depth < 0.0 || uThick <= 0.0) {
         return content.eval(fragCoord);
     }
 
@@ -602,16 +646,22 @@ half4 main(float2 fragCoord) {
     float len = length(grad);
     float2 outward = len > 0.0001 ? grad / len : float2(0.0);
 
-    float t = clamp(depth / uEdgeWidth, 0.0, 1.0);
-    float bend = (1.0 - t) * (1.0 - t);
-    float2 shift = outward * (bend * uBend);
+    float t = clamp(depth / uBezel, 0.0, 1.0);
+    float u = 1.0 - t;
+    float u3 = u * u * u;
+    float inner = max(1.0 - u3 * u, 0.0001);
+    float h = pow(inner, 0.25);
+    float slope = uThick * (u3 * pow(inner, -0.75)) / uBezel;
 
-    half4 cr = content.eval(clampCoord(fragCoord + shift * (1.0 + uDispersion)));
+    float thetaI = atan(slope);
+    float thetaT = asin(clamp(sin(thetaI) / uIndex, -1.0, 1.0));
+    float shiftLen = uThick * h * tan(thetaI - thetaT);
+    float2 shift = outward * shiftLen;
+
+    half4 cr = content.eval(clampCoord(fragCoord + shift * (1.0 + uDisp)));
     half4 cg = content.eval(clampCoord(fragCoord + shift));
-    half4 cb = content.eval(clampCoord(fragCoord + shift * (1.0 - uDispersion)));
-
-    half lift = half(bend * 0.07);
-    return half4(cr.r + lift, cg.g + lift, cb.b + lift, cg.a);
+    half4 cb = content.eval(clampCoord(fragCoord + shift * (1.0 - uDisp)));
+    return half4(cr.r, cg.g, cb.b, cg.a);
 }
 """
 }
