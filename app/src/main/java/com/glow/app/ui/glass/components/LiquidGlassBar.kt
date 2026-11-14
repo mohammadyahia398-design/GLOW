@@ -140,7 +140,7 @@ data class LiquidBarSpec(
     val bezel: Dp = 14.dp,
     val thickness: Dp = 30.dp,
     val refractiveIndex: Float = 1.5f,
-    val dispersion: Float = 0.02f,
+    val dispersion: Float = 0.12f,
 )
 
 /**
@@ -419,6 +419,7 @@ private fun LiquidBarBody(
                                         thick = thickPx * g,
                                         index = spec.refractiveIndex,
                                         dispersion = spec.dispersion,
+                                        press = min(g, 1f),
                                     )
                                 } else {
                                     null
@@ -595,6 +596,7 @@ private class LensEffectHolder {
         thick: Float,
         index: Float,
         dispersion: Float,
+        press: Float,
     ): RenderEffect {
         shader.setFloatUniform("uSize", layerW, layerH)
         shader.setFloatUniform("uHalf", halfW, halfH)
@@ -603,6 +605,8 @@ private class LensEffectHolder {
         shader.setFloatUniform("uThick", thick)
         shader.setFloatUniform("uIndex", index)
         shader.setFloatUniform("uDisp", dispersion)
+        shader.setFloatUniform("uRefl", bezel * 0.45f)
+        shader.setFloatUniform("uLit", press)
         return AndroidRenderEffect.createRuntimeShaderEffect(shader, "content").asComposeRenderEffect()
     }
 }
@@ -613,7 +617,7 @@ private class LensEffectHolder {
  * الحافة سطح محدّب بمنحنى «سكوِركل» ارتفاعه h(t) حيث t عمق البكسل داخل منطقة الحافة.
  * ميل السطح يعطي زاوية سقوط، وقانون سنيل يعطي زاوية الانكسار، والإزاحة الجانبية =
  * السماكة المتبقية × tan(زاوية السقوط − زاوية الانكسار). تُقرأ الألوان من موضع أبعد
- * نحو الخارج فيُضغط ما وراء الحافة داخلها كما في كرة زجاجية. المركز مسطّح فلا يتشوّه.
+ * نحو الخارج فيُضغط ما وراء الحافة داخلها كما في كرة زجاجية. المركز مسطّح فلا يتشوّه. في أطراف الحافة ينعكس المحتوى داخلياً (حلقة مقلوبة)، وتُضاف لمعة اتجاهية.
  * إن كانت السماكة صفراً (العدسة مسطّحة) لا يتغير شيء.
  */
 private object LensShader {
@@ -626,6 +630,8 @@ uniform float uBezel;
 uniform float uThick;
 uniform float uIndex;
 uniform float uDisp;
+uniform float uRefl;
+uniform float uLit;
 
 float lensSdf(float2 p) {
     float2 q = abs(p) - uHalf + float2(uCorner);
@@ -665,7 +671,21 @@ half4 main(float2 fragCoord) {
     half4 cr = content.eval(clampCoord(fragCoord + shift * (1.0 + uDisp)));
     half4 cg = content.eval(clampCoord(fragCoord + shift));
     half4 cb = content.eval(clampCoord(fragCoord + shift * (1.0 - uDisp)));
-    return half4(cr.r, cg.g, cb.b, cg.a);
+    half4 refr = half4(cr.r, cg.g, cb.b, cg.a);
+
+    // انعكاس داخلي عند أطراف الحافة: يظهر محتوى الداخل مقلوباً في حلقة رفيعة كالزجاج الحقيقي.
+    float k = 1.0 - clamp(depth / uRefl, 0.0, 1.0);
+    k = k * k * (3.0 - 2.0 * k);
+    float2 mp = fragCoord - outward * 2.0 * max(uRefl - depth, 0.0);
+    half4 mir = content.eval(clampCoord(mp));
+    half4 col = mix(refr, mir, half(k));
+
+    // إضاءة الحافة: لمعة اتجاهية (الضوء من أعلى اليسار) مع توهّج فرنل خفيف.
+    float dd = dot(outward, normalize(float2(-0.6, -0.8)));
+    float band = pow(1.0 - t, 4.0);
+    float lit = band * (max(dd, 0.0) * 0.45 + max(-dd, 0.0) * 0.28) + 0.05 * (1.0 - t) * (1.0 - t);
+    col.rgb += half3(half(lit * uLit)) * col.a;
+    return col;
 }
 """
 }
