@@ -10,6 +10,7 @@ import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.spring
+import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -87,7 +88,6 @@ import com.glow.app.ui.glass.surfaces.GlassBackdrop
 import com.glow.app.ui.glass.surfaces.GlassSurface
 import com.glow.app.ui.glass.surfaces.glassBackdropSource
 import com.glow.app.ui.glass.surfaces.rememberGlassBackdrop
-import com.glow.app.ui.theme.LocalGlowSkin
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
@@ -109,10 +109,10 @@ import kotlin.math.roundToInt
 @Immutable
 data class LiquidBarSpec(
     val height: Dp = 72.dp,
-    val innerPadding: Dp = 8.dp,
+    val innerPadding: Dp = 5.dp,
     val lensGrow: Dp = 12.dp,
     val iconSize: Dp = 26.dp,
-    val labelSize: TextUnit = 11.sp,
+    val labelSize: TextUnit = 12.sp,
     val barStyle: GlassStyle = GlassStyle.Regular.copy(
         tintAlpha = 0.26f,
         fallbackTintAlpha = 0.42f,
@@ -127,6 +127,8 @@ data class LiquidBarSpec(
     val bleed: Dp = 10.dp,
     val edgeWidth: Dp = 16.dp,
     val dispersion: Float = 0.35f,
+    val barFill: Color = Color(0xFFF8F8FA).copy(alpha = 0.93f),
+    val irisAlpha: Float = 0.80f,
 )
 
 /**
@@ -161,8 +163,8 @@ fun LiquidGlassBar(
     modifier: Modifier = Modifier,
     backdrop: GlassBackdrop? = null,
     spec: LiquidBarSpec = LiquidBarSpec(),
-    accent: Color = LocalGlowSkin.current.accentText,
-    unselected: Color = LocalGlowSkin.current.textSecondary,
+    accent: Color = Color(0xFF0891B2),
+    unselected: Color = Color(0xFF4A4A50),
 ) {
     if (items.isEmpty()) return
     val systemRtl = LocalLayoutDirection.current == LayoutDirection.Rtl
@@ -301,6 +303,8 @@ private fun LiquidBarBody(
                 style = spec.barStyle,
                 depth = GlassDepth.Floating,
             ) {}
+            // تعبئة بيضاء حليبية كما في المرجع؛ داخل المصدر فتكبّرها العدسة معه.
+            Box(Modifier.matchParentSize().background(spec.barFill, shape))
 
             Row(
                 modifier = Modifier
@@ -366,7 +370,7 @@ private fun LiquidBarBody(
                     },
             )
             // الحافة اللامعة والإضاءة: فوق المحتوى المنكسر فتبقى حادّة.
-            Box(Modifier.matchParentSize().drawBehind { drawLensRim(bleedPx) })
+            Box(Modifier.matchParentSize().drawBehind { drawLensRim(bleedPx, spec.irisAlpha) })
         }
     }
 }
@@ -411,7 +415,7 @@ private fun RowScope.LiquidBarTab(
             text = item.label,
             color = tint,
             fontSize = spec.labelSize,
-            fontWeight = if (active) FontWeight.SemiBold else FontWeight.Medium,
+            fontWeight = FontWeight.SemiBold,
             textAlign = TextAlign.Center,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
@@ -434,7 +438,7 @@ private class InsetCapsuleShape(private val inset: Float) : Shape {
 }
 
 /** يرسم حافة العدسة: لمعة علوية، إطار مضيء، إضاءة داخلية، وطيف لوني خفيف. */
-private fun DrawScope.drawLensRim(inset: Float) {
+private fun DrawScope.drawLensRim(inset: Float, irisAlpha: Float) {
     val w = size.width - 2f * inset
     val h = size.height - 2f * inset
     if (w <= 0f || h <= 0f) return
@@ -465,16 +469,28 @@ private fun DrawScope.drawLensRim(inset: Float) {
         style = Stroke(width = glow),
     )
 
-    // طيف لوني خفيف على الحافة
-    val iris = 1.2.dp.toPx()
+    // ظل داخلي رمادي خفيف من جهة البداية كما في المرجع
+    drawRoundRect(
+        brush = Brush.horizontalGradient(
+            colors = listOf(Color.Black.copy(alpha = 0.08f), Color.Transparent),
+            startX = inset,
+            endX = inset + w * 0.45f,
+        ),
+        topLeft = tl,
+        size = lensSize,
+        cornerRadius = radius,
+    )
+
+    // طيف لوني على الحافة
+    val iris = 2.dp.toPx()
     drawRoundRect(
         brush = Brush.sweepGradient(
             colors = listOf(
-                Color(0xFFFF6AD5).copy(alpha = 0.34f),
-                Color(0xFF8C7CFF).copy(alpha = 0.34f),
-                Color(0xFF5AE1FF).copy(alpha = 0.34f),
-                Color(0xFFFFE66D).copy(alpha = 0.34f),
-                Color(0xFFFF6AD5).copy(alpha = 0.34f),
+                Color(0xFFFF6AD5).copy(alpha = irisAlpha),
+                Color(0xFF8C7CFF).copy(alpha = irisAlpha),
+                Color(0xFF5AE1FF).copy(alpha = irisAlpha),
+                Color(0xFFFFE66D).copy(alpha = irisAlpha),
+                Color(0xFFFF6AD5).copy(alpha = irisAlpha),
             ),
             center = center,
         ),
