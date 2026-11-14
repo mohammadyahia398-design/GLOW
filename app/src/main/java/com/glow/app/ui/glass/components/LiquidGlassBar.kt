@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
@@ -116,8 +117,8 @@ import kotlin.math.roundToInt
 data class LiquidBarSpec(
     val height: Dp = 72.dp,
     val innerPadding: Dp = 5.dp,
-    val lensGrow: Dp = 18.dp,
-    val lensWiden: Float = 0.5f,
+    val lensGrow: Dp = 14.dp,
+    val lensWiden: Float = 0.45f,
     val iconSize: Dp = 26.dp,
     val labelSize: TextUnit = 12.sp,
     val barStyle: GlassStyle = GlassStyle.Regular.copy(
@@ -132,10 +133,10 @@ data class LiquidBarSpec(
     val springStiffness: Float = 380f,
     val pressDamping: Float = 0.60f,
     val pressStiffness: Float = 300f,
-    val magnify: Float = 1.12f,
-    val bleed: Dp = 20.dp,
-    val bezel: Dp = 22.dp,
-    val thickness: Dp = 34.dp,
+    val magnify: Float = 1.30f,
+    val bleed: Dp = 14.dp,
+    val bezel: Dp = 10.dp,
+    val thickness: Dp = 20.dp,
     val refractiveIndex: Float = 1.5f,
     val dispersion: Float = 0.04f,
 )
@@ -370,14 +371,11 @@ private fun LiquidBarBody(
         // 2) العدسة. كل شيء فيها يُقرأ في مرحلة التخطيط والرسم فلا تُعاد التركيبة كل إطار.
         if (lensW > 0f && layerW > 0f && layerH > 0f) {
             Box(
+                // الطبقة أطول من الكبسولة: unbounded وإلا قصّها التخطيط ووسّطها فأزاحها للأعلى.
                 Modifier
+                    .wrapContentSize(Alignment.TopStart, unbounded = true)
                     .absoluteOffset { IntOffset(layerLeft().roundToInt(), layerTop().roundToInt()) }
-                    .layout { measurable, _ ->
-                        val w = layerW.roundToInt().coerceAtLeast(0)
-                        val h = layerH.roundToInt().coerceAtLeast(0)
-                        val placeable = measurable.measure(Constraints.fixed(w, h))
-                        layout(w, h) { placeable.place(0, 0) }
-                    },
+                    .size(with(density) { layerW.toDp() }, with(density) { layerH.toDp() }),
             ) {
                 // المحتوى المنكسر: الخلفية الحقيقية تحت الشريط ثم الكبسولة، مع انكسار الحافة.
                 Box(
@@ -538,16 +536,16 @@ private fun DrawScope.drawLensRim(
 
     // جسم الزجاج: ضبابي قليلاً وهو مسطّح، وأصفى عند الانتفاخ.
     drawRoundRect(
-        color = Color.White.copy(alpha = 0.13f - 0.09f * p),
+        color = Color.White.copy(alpha = 0.12f - 0.10f * p),
         topLeft = tl,
         size = Size(width, height),
         cornerRadius = radius,
     )
 
     // إضاءة داخلية ناعمة على طول الحافة.
-    val glow = 5.dp.toPx()
+    val glow = 3.dp.toPx()
     drawRoundRect(
-        color = Color.White.copy(alpha = 0.05f + 0.09f * p),
+        color = Color.White.copy(alpha = 0.04f + 0.03f * p),
         topLeft = tl + Offset(glow / 2f, glow / 2f),
         size = Size(width - glow, height - glow),
         cornerRadius = CornerRadius((height - glow) / 2f),
