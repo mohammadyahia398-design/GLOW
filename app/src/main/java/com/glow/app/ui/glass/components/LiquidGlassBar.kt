@@ -116,11 +116,11 @@ import kotlin.math.roundToInt
  */
 @Immutable
 data class LiquidBarSpec(
-    val height: Dp = 72.dp,
-    val innerPadding: Dp = 5.dp,
+    val height: Dp = 64.dp,
+    val innerPadding: Dp = 3.dp,
     val lensGrow: Dp = 16.dp,
     val lensWiden: Float = 0.80f,
-    val restWiden: Float = 0.25f,
+    val restWiden: Float = 0.10f,
     val iconSize: Dp = 26.dp,
     val labelSize: TextUnit = 12.sp,
     val barStyle: GlassStyle = GlassStyle.Regular.copy(
@@ -135,10 +135,10 @@ data class LiquidBarSpec(
     val springStiffness: Float = 380f,
     val pressDamping: Float = 0.60f,
     val pressStiffness: Float = 300f,
-    val magnify: Float = 1.25f,
+    val magnify: Float = 1.05f,
     val bleed: Dp = 24.dp,
-    val bezel: Dp = 12.dp,
-    val thickness: Dp = 22.dp,
+    val bezel: Dp = 14.dp,
+    val thickness: Dp = 30.dp,
     val refractiveIndex: Float = 1.5f,
     val dispersion: Float = 0.02f,
 )
@@ -271,11 +271,11 @@ private fun LiquidBarBody(
     fun halfWidth(g: Float): Float = lensW / 2f * widenAt(g)
     fun halfHeight(g: Float): Float = lensH / 2f + growPx / 2f * g
 
-    // يمنع خروج العدسة المنتفخة يمين الكبسولة أو يسارها.
+    // يمنع خروج العدسة المنتفخة يمين الكبسولة أو يسارها، ويترك هامش innerPadding عند الطرفين.
     fun layerLeft(): Float {
         val hw = halfWidth(grownG())
         val raw = padPx + (position.value + 0.5f) * itemWidthPx()
-        val cx = max(hw, min(raw, barWidthPx - hw))
+        val cx = max(hw + padPx, min(raw, barWidthPx - hw - padPx))
         return cx - layerW / 2f
     }
     fun layerTop(): Float = (heightPx - layerH) / 2f
@@ -533,7 +533,7 @@ private class LensClipShape(
 }
 
 /**
- * يرسم حافة العدسة: جسم زجاجي رقيق مسطّح بلا لمس، وعند اللمس تقوى الإضاءة الحادّة
+ * يرسم حافة العدسة: بلا جسم ولا ضباب (الزجاج شفاف تماماً)، وعند اللمس تقوى الإضاءة الحادّة
  * على الحافة. لا ألوان مرسومة: أي لون على الحافة يأتي من انكسار ما تحتها.
  */
 private fun DrawScope.drawLensRim(
@@ -546,44 +546,26 @@ private fun DrawScope.drawLensRim(
     if (width <= 0f || height <= 0f) return
     val p = press.coerceIn(0f, 1f)
     val tl = Offset(left, top)
-    val radius = CornerRadius(height / 2f)
-
-    // جسم الزجاج: ضبابي قليلاً وهو مسطّح، وأصفى عند الانتفاخ.
-    drawRoundRect(
-        color = Color.White.copy(alpha = 0.12f - 0.10f * p),
-        topLeft = tl,
-        size = Size(width, height),
-        cornerRadius = radius,
-    )
-
-    // إضاءة داخلية ناعمة على طول الحافة.
-    val glow = 3.dp.toPx()
-    drawRoundRect(
-        color = Color.White.copy(alpha = 0.04f + 0.03f * p),
-        topLeft = tl + Offset(glow / 2f, glow / 2f),
-        size = Size(width - glow, height - glow),
-        cornerRadius = CornerRadius((height - glow) / 2f),
-        style = Stroke(width = glow),
-    )
 
     // خط داكن رفيع خارج الحافة: يفصل العدسة عمّا تحتها بحدّ واضح.
     val hair = 1.dp.toPx()
     drawRoundRect(
-        color = Color.Black.copy(alpha = 0.10f + 0.22f * p),
+        color = Color.Black.copy(alpha = 0.06f + 0.14f * p),
         topLeft = tl - Offset(hair / 2f, hair / 2f),
         size = Size(width + hair, height + hair),
         cornerRadius = CornerRadius((height + hair) / 2f),
         style = Stroke(width = hair),
     )
 
-    // الإطار اللامع: أقوى عند الزاويتين المقابلتين للضوء.
-    val rim = 1.2.dp.toPx()
+    // الإطار اللامع: قوسان ساطعان عند الزاويتين المقابلتين للضوء، وباقي الحافة خافتة جداً.
+    val rim = 1.dp.toPx()
     drawRoundRect(
         brush = Brush.linearGradient(
-            colors = listOf(
-                Color.White.copy(alpha = 0.55f + 0.40f * p),
-                Color.White.copy(alpha = 0.10f),
-                Color.White.copy(alpha = 0.40f + 0.30f * p),
+            colorStops = arrayOf(
+                0.00f to Color.White.copy(alpha = 0.70f + 0.25f * p),
+                0.28f to Color.White.copy(alpha = 0.08f),
+                0.72f to Color.White.copy(alpha = 0.08f),
+                1.00f to Color.White.copy(alpha = 0.60f + 0.30f * p),
             ),
             start = tl,
             end = tl + Offset(width, height),
